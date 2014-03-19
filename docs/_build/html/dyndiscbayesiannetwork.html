@@ -1,0 +1,221 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dyndiscbayesiannetwork &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="tablecpdfactorization" href="tablecpdfactorization.html" />
+    <link rel="prev" title="lgbayesiannetwork" href="lgbayesiannetwork.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tablecpdfactorization.html" title="tablecpdfactorization"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="lgbayesiannetwork.html" title="lgbayesiannetwork"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-libpgm.dyndiscbayesiannetwork">
+<span id="dyndiscbayesiannetwork"></span><h1>dyndiscbayesiannetwork<a class="headerlink" href="#module-libpgm.dyndiscbayesiannetwork" title="Permalink to this headline">¶</a></h1>
+<p>This module provides tools to represent and handle dynamic Bayesian networks with discrete conditional probability distributions. Dynamic Bayesian networks represent systems that change over time. This means that each node in the BN has a finite number of outcomes, the distribution over which is dependent on the outcomes of the node&#8217;s parents and on the outcomes of the Bayesian network at the previous time interval. In other words, the Bayesian network changes over time according to Bayesian conditional probability rules.</p>
+<dl class="class">
+<dt id="libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork">
+<em class="property">class </em><tt class="descclassname">libpgm.dyndiscbayesiannetwork.</tt><tt class="descname">DynDiscBayesianNetwork</tt><big>(</big><em>orderedskeleton=None</em>, <em>nodedata=None</em><big>)</big><a class="reference internal" href="_modules/libpgm/dyndiscbayesiannetwork.html#DynDiscBayesianNetwork"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents a dynamic Bayesian network with discrete CPD tables. It contains the attributes <em>V</em>, <em>E</em>, <em>initial_Vdata</em>, and <em>twotbn_Vdata</em>, and the method <em>randomsample</em>.</p>
+<p>This class can be called either with or without arguments. If it is called without arguments, none of its attributes are instantiated and it is left to the user to instantiate them manually. If it is called with arguments, the attributes will be loaded directly from the inputs. The arguments must be (in order):</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><em>orderedskeleton</em> &#8211; An instance of the <a class="reference internal" href="orderedskeleton.html"><em>OrderedSkeleton</em></a> or <a class="reference internal" href="graphskeleton.html"><em>GraphSkeleton</em></a> (as long as it&#8217;s ordered) class.</li>
+<li><em>nodedata</em> &#8211; An instance of the <a class="reference internal" href="nodedata.html"><em>NodeData</em></a> class.</li>
+</ol>
+</div></blockquote>
+<p>If these arguments are present, all attributes of the class (<em>V</em>, <em>E</em>, and <em>Vdata</em>) will be automatically copied from the graph skeleton and node data inputs.</p>
+<p>This class requires that the <em>initial_Vdata</em> and <em>twotbn_Vdata</em> attributes get loaded with a dictionary with node data of the following fomat:</p>
+<div class="highlight-python"><pre>{
+    "initial_Vdata": {
+        "&lt;vertex 1&gt;": &lt;dict containing vertex 1 data&gt;,
+        ...
+        "&lt;vertex n&gt;": &lt;dict containing vertex n data&gt;
+    }
+    "twotbn_Vdata": {
+        "&lt;vertex 1&gt;": &lt;dict containing vertex 1 data&gt;,
+        ...
+        "&lt;vertex n&gt;": &lt;dict containing vertex n data&gt;
+    }
+}</pre>
+</div>
+<p>In particular, the <tt class="docutils literal"><span class="pre">&quot;parents&quot;</span></tt> attribute of <tt class="docutils literal"><span class="pre">&quot;twotbn_Vdata&quot;</span></tt> has the following format:</p>
+<div class="highlight-python"><pre>"twotbn_Vdata": {
+    "vertex": {
+        "parents": ["past_&lt;vertex 1&gt;",...,"past_&lt;vertex n&gt;", "vertex 1",..., "vertex m"]
+        ...
+    }
+}</pre>
+</div>
+<p>Where vertices 1 through <em>n</em> come from the previous time interval, and vertices 1 through <em>m</em> come from the current time interval. Note that additional keys besides the ones listed are possible in the dict of each vertex. For a full example see <a class="reference internal" href="unittestdyndict.html"><em>dynamic discrete bayesian network</em></a>.</p>
+<p>Upon loading, the class will also check that the keys of <em>Vdata</em> correspond to the vertices in <em>V</em>.</p>
+<dl class="attribute">
+<dt id="libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.V">
+<tt class="descname">V</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.V" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of the names of the vertices.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.E">
+<tt class="descname">E</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.E" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of [origin, destination] pairs of vertices that make edges.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.initial_Vdata">
+<tt class="descname">initial_Vdata</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.initial_Vdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary containing CPD data for the Bayesian network at time interval 0.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.twotbn_Vdata">
+<tt class="descname">twotbn_Vdata</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.twotbn_Vdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary containing CPD data for the Bayesian network for time intervals greater than 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.randomsample">
+<tt class="descname">randomsample</tt><big>(</big><em>n</em><big>)</big><a class="reference internal" href="_modules/libpgm/dyndiscbayesiannetwork.html#DynDiscBayesianNetwork.randomsample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.dyndiscbayesiannetwork.DynDiscBayesianNetwork.randomsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method produces a sequence of length <em>n</em> containing one dynamic Bayesian network sample over <em>n</em> time units. In other words, the first entry of the sequence is a sample from the initial Bayesian network, and each subsequent entry is sampled from the Bayesian network conditioned on the outcomes of its predecessor. This function requires a specific dictionary format in Vdata, as shown in <a class="reference internal" href="unittestdyndict.html"><em>dynamic discrete bayesian network</em></a>.</p>
+<dl class="docutils">
+<dt>This function takes the following arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>n</em> &#8211; The number of time units over which to sample (thus also the length of the sequence produced)</li>
+</ol>
+</dd>
+<dt>And returns:</dt>
+<dd>A list of <em>n</em> random samples, each conditioned on its precedessor, each a dict containing (vertex: value) pairs.</dd>
+</dl>
+<p>Usage example: this would produce a sequence of 10 samples, one per time step, each conditioned on its predecessor:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">graphskeleton</span> <span class="kn">import</span> <span class="n">GraphSkeleton</span>
+<span class="kn">from</span> <span class="nn">dyndiscbayesiannetwork</span> <span class="kn">import</span> <span class="n">DynDiscBayesianNetwork</span>
+
+<span class="n">path</span> <span class="o">=</span> <span class="s">&quot;../tests/unittestdyndict.txt&quot;</span> <span class="c"># an input file</span>
+<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+<span class="n">g</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">DynDiscBayesianNetwork</span><span class="p">()</span>
+<span class="n">skel</span> <span class="o">=</span> <span class="n">GraphSkeleton</span><span class="p">()</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s">&quot;V&quot;</span><span class="p">]</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s">&quot;E&quot;</span><span class="p">]</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">toporder</span><span class="p">()</span>
+<span class="n">d</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">skel</span><span class="o">.</span><span class="n">V</span>
+<span class="n">d</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">skel</span><span class="o">.</span><span class="n">E</span>
+<span class="n">d</span><span class="o">.</span><span class="n">initial_Vdata</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s">&quot;initial_Vdata&quot;</span><span class="p">]</span>
+<span class="n">d</span><span class="o">.</span><span class="n">twotbn_Vdata</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s">&quot;twotbn_Vdata&quot;</span><span class="p">]</span>
+
+<span class="n">seq</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">randomsample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="lgbayesiannetwork.html"
+                        title="previous chapter">lgbayesiannetwork</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tablecpdfactorization.html"
+                        title="next chapter">tablecpdfactorization</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/dyndiscbayesiannetwork.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tablecpdfactorization.html" title="tablecpdfactorization"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="lgbayesiannetwork.html" title="lgbayesiannetwork"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

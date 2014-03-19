@@ -1,0 +1,187 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>linear gaussian bayesian network &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="hybrid bayesian network" href="unittesthdict.html" />
+    <link rel="prev" title="discrete bayesian network" href="unittestdict.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="unittesthdict.html" title="hybrid bayesian network"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="unittestdict.html" title="discrete bayesian network"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="linear-gaussian-bayesian-network">
+<h1>linear gaussian bayesian network<a class="headerlink" href="#linear-gaussian-bayesian-network" title="Permalink to this headline">¶</a></h1>
+<p>This is an example input file for a Bayesian network with linear Gaussian conditional probability distributions. It provides linear Gaussian CPD data for the same graph skeleton as in the <a class="reference internal" href="unittestdict.html"><em>discrete case</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;Vdata&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;Grade&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;mean_base&quot;</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span>
+            <span class="s">&quot;mean_scal&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="o">-</span><span class="mf">0.25</span><span class="p">,</span>
+                <span class="mf">0.25</span>
+            <span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s">&quot;Difficulty&quot;</span><span class="p">,</span>
+                <span class="s">&quot;Intelligence&quot;</span>
+            <span class="p">],</span>
+            <span class="s">&quot;variance&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;lg&quot;</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s">&quot;Letter&quot;</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+        <span class="s">&quot;Intelligence&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;mean_base&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+            <span class="s">&quot;mean_scal&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+            <span class="s">&quot;variance&quot;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>
+            <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;lg&quot;</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s">&quot;SAT&quot;</span><span class="p">,</span>
+                <span class="s">&quot;Grade&quot;</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+        <span class="s">&quot;Difficulty&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;mean_base&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+            <span class="s">&quot;mean_scal&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+            <span class="s">&quot;variance&quot;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>
+            <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;lg&quot;</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s">&quot;Grade&quot;</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+        <span class="s">&quot;Letter&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;mean_base&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">110</span><span class="p">,</span>
+            <span class="s">&quot;mean_scal&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="mi">2</span>
+            <span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s">&quot;Grade&quot;</span>
+            <span class="p">],</span>
+            <span class="s">&quot;variance&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+            <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;lg&quot;</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="n">null</span>
+        <span class="p">},</span>
+        <span class="s">&quot;SAT&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;mean_base&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+            <span class="s">&quot;mean_scal&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="mi">1</span>
+            <span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s">&quot;Intelligence&quot;</span>
+            <span class="p">],</span>
+            <span class="s">&quot;variance&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+            <span class="s">&quot;type&quot;</span><span class="p">:</span> <span class="s">&quot;lg&quot;</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="n">null</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="unittestdict.html"
+                        title="previous chapter">discrete bayesian network</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="unittesthdict.html"
+                        title="next chapter">hybrid bayesian network</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/unittestlgdict.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="unittesthdict.html" title="hybrid bayesian network"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="unittestdict.html" title="discrete bayesian network"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,256 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dynamic discrete bayesian network &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="prev" title="hybrid bayesian network" href="unittesthdict.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="unittesthdict.html" title="hybrid bayesian network"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="dynamic-discrete-bayesian-network">
+<h1>dynamic discrete bayesian network<a class="headerlink" href="#dynamic-discrete-bayesian-network" title="Permalink to this headline">¶</a></h1>
+<p>This is an example input file for a dynamic Bayesian network with discete CPDs, i.e., a Bayesian network that changes over time wherein the Bayesian network at each time interval is influenced by the outcomes of the Bayesian network in the previous time interval. It is represented by a set of initial CPD data, <tt class="docutils literal"><span class="pre">initial_Vdata</span></tt>, and dynamic CPD data, <tt class="docutils literal"><span class="pre">twotbn_Vdata</span></tt>. See Koller et al. 204 for more on 2-TBN dynamic Bayesian networks. This example provides dynamic CPD data for the same graph skeleton as in the <a class="reference internal" href="unittestdict.html"><em>discrete case</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;V&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Letter&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">,</span> <span class="s">&quot;Intelligence&quot;</span><span class="p">,</span> <span class="s">&quot;SAT&quot;</span><span class="p">,</span> <span class="s">&quot;Difficulty&quot;</span><span class="p">],</span>
+    <span class="s">&quot;E&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="s">&quot;Intelligence&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s">&quot;Difficulty&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s">&quot;Intelligence&quot;</span><span class="p">,</span> <span class="s">&quot;SAT&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s">&quot;Grade&quot;</span><span class="p">,</span> <span class="s">&quot;Letter&quot;</span><span class="p">]],</span>
+    <span class="s">&quot;initial_Vdata&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;Letter&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;weak&quot;</span><span class="p">,</span> <span class="s">&quot;strong&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;A&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;B&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="mi">6</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;C&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">99</span><span class="p">,</span> <span class="o">.</span><span class="mo">01</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;SAT&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;lowscore&quot;</span><span class="p">,</span> <span class="s">&quot;highscore&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Intelligence&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">95</span><span class="p">,</span> <span class="o">.</span><span class="mo">05</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="mi">8</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Grade&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span> <span class="s">&quot;B&quot;</span><span class="p">,</span> <span class="s">&quot;C&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Difficulty&quot;</span><span class="p">,</span> <span class="s">&quot;Intelligence&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Letter&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;easy&#39;, &#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;easy&#39;, &#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">9</span><span class="p">,</span> <span class="o">.</span><span class="mi">08</span><span class="p">,</span> <span class="o">.</span><span class="mo">02</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;hard&#39;, &#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mo">05</span><span class="p">,</span> <span class="o">.</span><span class="mi">25</span><span class="p">,</span> <span class="o">.</span><span class="mi">7</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;hard&#39;, &#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="mi">2</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Intelligence&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;low&quot;</span><span class="p">,</span> <span class="s">&quot;high&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;SAT&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">7</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">]</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Difficulty&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;easy&quot;</span><span class="p">,</span> <span class="s">&quot;hard&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span>  <span class="p">[</span><span class="o">.</span><span class="mi">6</span><span class="p">,</span> <span class="o">.</span><span class="mi">4</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s">&quot;twotbn_Vdata&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;Letter&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;weak&quot;</span><span class="p">,</span> <span class="s">&quot;strong&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;past_Grade&quot;</span><span class="p">,</span> <span class="s">&quot;past_Letter&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;A&#39;, &#39;weak&#39;, &#39;A&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;A&#39;, &#39;weak&#39;, &#39;B&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">15</span><span class="p">,</span> <span class="o">.</span><span class="mi">85</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;A&#39;, &#39;weak&#39;, &#39;C&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mo">05</span><span class="p">,</span> <span class="o">.</span><span class="mi">95</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;A&#39;, &#39;strong&#39;, &#39;A&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;A&#39;, &#39;strong&#39;, &#39;B&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;A&#39;, &#39;strong&#39;, &#39;C&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;B&#39;, &#39;weak&#39;, &#39;A&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">47</span><span class="p">,</span> <span class="o">.</span><span class="mi">53</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;B&#39;, &#39;weak&#39;, &#39;B&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="mi">6</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;B&#39;, &#39;weak&#39;, &#39;C&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="mi">6</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;B&#39;, &#39;strong&#39;, &#39;A&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="mi">6</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;B&#39;, &#39;strong&#39;, &#39;B&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">41</span><span class="p">,</span> <span class="o">.</span><span class="mi">59</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;B&#39;, &#39;strong&#39;, &#39;C&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">42</span><span class="p">,</span> <span class="o">.</span><span class="mi">58</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;C&#39;, &#39;weak&#39;, &#39;A&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">99</span><span class="p">,</span> <span class="o">.</span><span class="mo">01</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;C&#39;, &#39;weak&#39;, &#39;B&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">99</span><span class="p">,</span> <span class="o">.</span><span class="mo">01</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;C&#39;, &#39;weak&#39;, &#39;C&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">99</span><span class="p">,</span> <span class="o">.</span><span class="mo">01</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;C&#39;, &#39;strong&#39;, &#39;A&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">99</span><span class="p">,</span> <span class="o">.</span><span class="mo">01</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;C&#39;, &#39;strong&#39;, &#39;B&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">99</span><span class="p">,</span> <span class="o">.</span><span class="mo">01</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;C&#39;, &#39;strong&#39;, &#39;C&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">99</span><span class="p">,</span> <span class="o">.</span><span class="mo">01</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;SAT&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;lowscore&quot;</span><span class="p">,</span> <span class="s">&quot;highscore&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Intelligence&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">95</span><span class="p">,</span> <span class="o">.</span><span class="mo">05</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="mi">8</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Grade&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span> <span class="s">&quot;B&quot;</span><span class="p">,</span> <span class="s">&quot;C&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Difficulty&quot;</span><span class="p">,</span> <span class="s">&quot;Intelligence&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Letter&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;easy&#39;, &#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;easy&#39;, &#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">9</span><span class="p">,</span> <span class="o">.</span><span class="mi">08</span><span class="p">,</span> <span class="o">.</span><span class="mo">02</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;hard&#39;, &#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mo">05</span><span class="p">,</span> <span class="o">.</span><span class="mi">25</span><span class="p">,</span> <span class="o">.</span><span class="mi">7</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;hard&#39;, &#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="mi">2</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Intelligence&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;low&quot;</span><span class="p">,</span> <span class="s">&quot;high&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;past_Intelligence&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;SAT&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">7</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">7</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Difficulty&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;easy&quot;</span><span class="p">,</span> <span class="s">&quot;hard&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;past_Difficulty&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;easy&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">9</span><span class="p">,</span> <span class="o">.</span><span class="mi">1</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;hard&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="unittesthdict.html"
+                        title="previous chapter">hybrid bayesian network</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/unittestdyndict.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="unittesthdict.html" title="hybrid bayesian network"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

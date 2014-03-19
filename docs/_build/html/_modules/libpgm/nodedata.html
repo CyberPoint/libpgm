@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>libpgm.nodedata &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for libpgm.nodedata</h1><div class="highlight"><pre>
+<span class="c"># Copyright (c) 2012, CyberPoint International, LLC</span>
+<span class="c"># All rights reserved.</span>
+<span class="c"># </span>
+<span class="c"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer.</span>
+<span class="c">#     * Redistributions in binary form must reproduce the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer in the</span>
+<span class="c">#       documentation and/or other materials provided with the distribution.</span>
+<span class="c">#     * Neither the name of the CyberPoint International, LLC nor the</span>
+<span class="c">#       names of its contributors may be used to endorse or promote products</span>
+<span class="c">#       derived from this software without specific prior written permission.</span>
+<span class="c"># </span>
+<span class="c"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="c"># ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="c"># WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c"># DISCLAIMED. IN NO EVENT SHALL CYBERPOINT INTERNATIONAL, LLC BE LIABLE FOR ANY</span>
+<span class="c"># DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="c"># (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="c"># LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND</span>
+<span class="c"># ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="c"># SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">A module for creating and managing node data. Node data in this library can have many types, dependent on whether the conditional probability distributions are discrete, linear Gaussian, or hybrid, and on whether the Bayesian network is static or dynamic. For example input files, see :doc:`unittestdict`, :doc:`unittesthdict`, :doc:`unittestlgdict`, and :doc:`unittestdyndict`.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">dictionary</span> <span class="kn">import</span> <span class="n">Dictionary</span>
+
+<div class="viewcode-block" id="NodeData"><a class="viewcode-back" href="../../nodedata.html#libpgm.nodedata.NodeData">[docs]</a><span class="k">class</span> <span class="nc">NodeData</span><span class="p">(</span><span class="n">Dictionary</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This class represents the node data for each node in a graph. If the Bayesian network is static, it contains the attribute *Vdata*. If the Bayesian network is dynamic, it contains two attributes, *initial_Vdata* and *twotbn_Vdata*. If the Bayesian network has hybrid CPDs, it contains the additional attribute *nodes*.</span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Vdata</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="sd">&#39;&#39;&#39;A dictionary of node data.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_Vdata</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="sd">&#39;&#39;&#39;In dynamic graphs, a dictionary containing node data for the initial time interval.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">twotbn_Vdata</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="sd">&#39;&#39;&#39;In dynamic graphs, a dictionary containing node data for every time step interval after the first one.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="sd">&#39;&#39;&#39;In hybrid graphs, a dictionary of {key:value} pairs linking the name of each node (the key) to a clas instance (the value) which represents the node, its data, and its sampling function.&#39;&#39;&#39;</span>
+
+
+<div class="viewcode-block" id="NodeData.load"><a class="viewcode-back" href="../../nodedata.html#libpgm.nodedata.NodeData.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Load node data from an input file located at *path*. Input file must be a plaintext .txt file with a JSON-style representation of a dict. The dict must have the top-level key ``Vdata`` or two top-level keys, ``initial_Vdata`` and ``twotbn_Vdata``. For example:: </span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;Vdata&quot;: {</span>
+<span class="sd">                    &quot;&lt;vertex 1&gt;&quot;: &lt;dict containing vertex 1 data&gt;,</span>
+<span class="sd">                    ...</span>
+<span class="sd">                    &quot;&lt;vertex n&gt;&quot;: &lt;dict containing vertex n data&gt;</span>
+<span class="sd">                }</span>
+<span class="sd">            }</span>
+
+<span class="sd">        or::</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;initial_Vdata&quot;: {</span>
+<span class="sd">                    &quot;&lt;vertex 1&gt;&quot;: &lt;dict containing vertex 1 data&gt;,</span>
+<span class="sd">                    ...</span>
+<span class="sd">                    &quot;&lt;vertex n&gt;&quot;: &lt;dict containing vertex n data&gt;</span>
+<span class="sd">                }</span>
+<span class="sd">                &quot;twotbn_Vdata&quot;: {</span>
+<span class="sd">                    &quot;&lt;vertex 1&gt;&quot;: &lt;dict containing vertex 1 data&gt;,</span>
+<span class="sd">                    ...</span>
+<span class="sd">                    &quot;&lt;vertex n&gt;&quot;: &lt;dict containing vertex n data&gt;</span>
+<span class="sd">                }</span>
+<span class="sd">            }</span>
+<span class="sd">            </span>
+<span class="sd">        The function takes the following arguments:</span>
+<span class="sd">            1. *path* -- The path to the text file that contains input data (e.g., &quot;mydictionary.txt&quot;)</span>
+<span class="sd">        </span>
+<span class="sd">        In the static case, it modifies *Vdata* to hold the dictionary found at path. In the dynamic case, it modifies the *initial_Vdata* and *twotbn_Vdata* attributes to hold the dictionaries found at path.</span>
+<span class="sd">            </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dictload</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c"># try to load both for normal and dynamic cases</span>
+        <span class="k">try</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">Vdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alldata</span><span class="p">[</span><span class="s">&quot;Vdata&quot;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">initial_Vdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alldata</span><span class="p">[</span><span class="s">&quot;initial_Vdata&quot;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">twotbn_Vdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alldata</span><span class="p">[</span><span class="s">&quot;twotbn_Vdata&quot;</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&quot;Error: NodeData did not recognize input file format.&quot;</span>
+
+
+        <span class="c"># free unused memory</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">alldata</span>
+</div>
+<div class="viewcode-block" id="NodeData.entriestoinstances"><a class="viewcode-back" href="../../nodedata.html#libpgm.nodedata.NodeData.entriestoinstances">[docs]</a>    <span class="k">def</span> <span class="nf">entriestoinstances</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        For each node, convert dictionary entry to class instance.</span>
+
+<span class="sd">        This method is used only when dealing with Hybrid Bayesian networks as found in the :doc:`hybayesiannetwork` module. </span>
+
+<span class="sd">        The type of the node must be located in the &#39;type&#39; attribute of the node&#39;s dictionary entry. To see an example of such a dictionary, see :doc:`unittesthdict`. This type is used to instantiate a corresponding class from libpgm/CPDtypes/, and store the node&#39;s dictionary info in that class. Thus we lose none of the dictionary data, yet we gain the ability to use the instantiated class&#39;s built-in function to choose its own outcome based on the outcomes of its parents. </span>
+
+<span class="sd">        In order for this method to be called, the self.Vdata attribute must have dictionary entries of the following form::</span>
+
+<span class="sd">            &lt;vertex name&gt;: {</span>
+<span class="sd">                &#39;type&#39;: &lt;type of node -- must correspond to module in /CPDtypes&gt;,</span>
+<span class="sd">                &#39;parents&#39;: &lt;array of parents of node&gt;,</span>
+<span class="sd">                &#39;children&#39;: &lt;array of children of node&gt;,</span>
+<span class="sd">                &lt;whatever further entries are required by the type*&gt; </span>
+<span class="sd">            }</span>
+
+<span class="sd">        For instance, type &quot;discrete&quot; requires a &quot;cprob&quot; entry, while type &quot;lg&quot;</span>
+<span class="sd">        requires &quot;mean_base&quot;, &quot;mean_scal&quot;, and &quot;variance&quot; entries.</span>
+
+<span class="sd">        The function draws on the data in the *Vdata* attribute, and instantiates the attribute *nodes*, which is a dictionary of {name: instance} pairs where &#39;name&#39; is the name of the node and &#39;instance&#39; is a class instance containing the node data and the proper sampling function.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c"># declare result dict</span>
+        <span class="n">rarray</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="c"># transform into class instances</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">Vdata</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            
+            <span class="c"># import module containing class</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">entry</span><span class="p">][</span><span class="s">&quot;type&quot;</span><span class="p">])</span>
+            <span class="k">exec</span><span class="p">(</span><span class="s">&quot;import CPDtypes.&quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&quot; as &quot;</span> <span class="o">+</span> <span class="n">path</span><span class="p">)</span>
+
+            <span class="c"># instantiate class</span>
+            <span class="k">exec</span><span class="p">(</span><span class="s">&quot;tmpnode = &quot;</span> <span class="o">+</span> <span class="n">path</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="o">.</span><span class="n">capitalize</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;(self.Vdata[entry])&quot;</span><span class="p">)</span>
+
+            <span class="c"># append to array</span>
+            <span class="k">exec</span><span class="p">(</span><span class="s">&quot;rarray[&#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;&#39;] = tmpnode&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">rarray</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,223 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to libpgm! &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="#" />
+    <link rel="next" title="dictionary" href="dictionary.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dictionary.html" title="dictionary"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="welcome-to-libpgm">
+<h1>Welcome to libpgm!<a class="headerlink" href="#welcome-to-libpgm" title="Permalink to this headline">¶</a></h1>
+<p>libpgm is an endeavor to make Bayesian probability graphs easy to use. The effort originates from Daphne Koller and Nir Friedman&#8217;s <em>Probabilistic Graphical Models</em> (2009), which provides an in-depth study of probabilistic graphical models and their applications.</p>
+<p>Install from pypi at <a class="reference external" href="http://pypi.python.org/pypi/libpgm">http://pypi.python.org/pypi/libpgm</a> or download a tarball <a class="reference external" href="TODO">here</a>.</p>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>The library consists of a series of importable modules, which either represent types of Bayesian graphs, contain methods to operate on them, or both. The methods&#8217; individual documentation pages are found below:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dictionary.html">dictionary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graphskeleton.html">graphskeleton</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orderedskeleton.html">orderedskeleton</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nodedata.html">nodedata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="discretebayesiannetwork.html">discretebayesiannetwork</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hybayesiannetwork.html">hybayesiannetwork</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lgbayesiannetwork.html">lgbayesiannetwork</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dyndiscbayesiannetwork.html">dyndiscbayesiannetwork</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tablecpdfactorization.html">tablecpdfactorization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tablecpdfactor.html">tablecpdfactor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sampleaggregator.html">sampleaggregator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pgmlearner.html">pgmlearner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CPDtypes.html">CPDtypes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CPDtypes.html#module-libpgm.CPDtypes.discrete">discrete</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CPDtypes.html#module-libpgm.CPDtypes.lg">linear gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CPDtypes.html#module-libpgm.CPDtypes.lgandd">linear gaussian + discrete</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CPDtypes.html#module-libpgm.CPDtypes.crazy">crazy (test type)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>Note that <a class="reference external" href="http://www.numpy.scipy.org">numpy</a>, <a class="reference external" href="http://www.scipy.org">scipy</a>, and Python 2.7 are required for this library.</p>
+</div>
+<div class="section" id="capabilities">
+<h2>Capabilities<a class="headerlink" href="#capabilities" title="Permalink to this headline">¶</a></h2>
+<p>Briefly, the capabilities of this library are:</p>
+<blockquote>
+<div><ul>
+<li><dl class="first docutils">
+<dt>Sampling</dt>
+<dd><ul class="first last simple">
+<li>Forward sampling in a discrete-CPD Bayesian network</li>
+<li>Forward sampling in a linear Gaussian-CPD Bayesian network</li>
+<li>Forward sampling in a hybrid (any CPD type) Bayesian network</li>
+<li>Forward sampling in a dynamic 2-TBN Bayesian network</li>
+<li>Gibbs sampling in a discrete-CPD Bayesian network (given evidence)</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Deterministic Inference</dt>
+<dd><ul class="first last simple">
+<li>Compute the probability distribution over a specific node or nodes in a discrete-CPD Bayesian network (given evidence, if present)</li>
+<li>Compute the exact probability of an outcome in a discrete-CPD Bayesian network (given evidence, if present)</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Approximative Inference</dt>
+<dd><ul class="first last simple">
+<li>Compute the approximate probability distribution by generating samples</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Learning</dt>
+<dd><ul class="first last simple">
+<li>Learn the CPDs of a discrete-CPD Bayesian network, given data and a structure</li>
+<li>Learn the structure of a discrete Bayesian network, given only data</li>
+<li>Learn the CPDs of a linear Gaussian Bayesian network, given data and a structure</li>
+<li>Learn the strcutre of a linear Gaussian Bayesian network, given only data</li>
+<li>Learn entire Bayesian networks (structures and parameters) from data</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="input-files">
+<h2>Input files<a class="headerlink" href="#input-files" title="Permalink to this headline">¶</a></h2>
+<p>Because Bayesian probability graphs are large and contain a lot of data, the library works with .txt files as inputs. The formatting used is JavaScript Object Notation (JSON), with some flexibility (the <a class="reference internal" href="dictionary.html"><em>dictionary</em></a> module has the capacity to transform python-style dicts to JSON, for instance). Internally, the library stores these files as <em>json</em> objects from python&#8217;s <a class="reference external" href="http://docs.python.org/library/json.html">json</a> library. For examples of the formatting, and of the particular data required for each different Bayesian network type, see the example input files below:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="unittestdict.html">discrete bayesian network</a></li>
+<li class="toctree-l1"><a class="reference internal" href="unittestlgdict.html">linear gaussian bayesian network</a></li>
+<li class="toctree-l1"><a class="reference internal" href="unittesthdict.html">hybrid bayesian network</a></li>
+<li class="toctree-l1"><a class="reference internal" href="unittestdyndict.html">dynamic discrete bayesian network</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to libpgm!</a><ul>
+<li><a class="reference internal" href="#documentation">Documentation</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#capabilities">Capabilities</a></li>
+<li><a class="reference internal" href="#input-files">Input files</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dictionary.html"
+                        title="next chapter">dictionary</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dictionary.html" title="dictionary"
+             >next</a> |</li>
+        <li><a href="#">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

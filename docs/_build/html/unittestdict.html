@@ -1,0 +1,187 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>discrete bayesian network &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="linear gaussian bayesian network" href="unittestlgdict.html" />
+    <link rel="prev" title="CPDtypes" href="CPDtypes.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="unittestlgdict.html" title="linear gaussian bayesian network"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="CPDtypes.html" title="CPDtypes"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="discrete-bayesian-network">
+<h1>discrete bayesian network<a class="headerlink" href="#discrete-bayesian-network" title="Permalink to this headline">¶</a></h1>
+<p>This is an example input file for a Bayesian network with discrete conditional probability distributions. The example is a small (5 node) graph modeling a student&#8217;s performance. The graph skeleton data is also included, in the vertex set (&#8220;V&#8221;) and the edge set (&#8220;E&#8221;). The graph itself is from Koller et al. 53.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;V&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Letter&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">,</span> <span class="s">&quot;Intelligence&quot;</span><span class="p">,</span> <span class="s">&quot;SAT&quot;</span><span class="p">,</span> <span class="s">&quot;Difficulty&quot;</span><span class="p">],</span>
+    <span class="s">&quot;E&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="s">&quot;Intelligence&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s">&quot;Difficulty&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s">&quot;Intelligence&quot;</span><span class="p">,</span> <span class="s">&quot;SAT&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s">&quot;Grade&quot;</span><span class="p">,</span> <span class="s">&quot;Letter&quot;</span><span class="p">]],</span>
+    <span class="s">&quot;Vdata&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;Letter&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;weak&quot;</span><span class="p">,</span> <span class="s">&quot;strong&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;A&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;B&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="mi">6</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;C&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">99</span><span class="p">,</span> <span class="o">.</span><span class="mo">01</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;SAT&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;lowscore&quot;</span><span class="p">,</span> <span class="s">&quot;highscore&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Intelligence&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">95</span><span class="p">,</span> <span class="o">.</span><span class="mo">05</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="mi">8</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Grade&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span> <span class="s">&quot;B&quot;</span><span class="p">,</span> <span class="s">&quot;C&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Difficulty&quot;</span><span class="p">,</span> <span class="s">&quot;Intelligence&quot;</span><span class="p">],</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Letter&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s">&quot;[&#39;easy&#39;, &#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;easy&#39;, &#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">9</span><span class="p">,</span> <span class="o">.</span><span class="mi">08</span><span class="p">,</span> <span class="o">.</span><span class="mo">02</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;hard&#39;, &#39;low&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mo">05</span><span class="p">,</span> <span class="o">.</span><span class="mi">25</span><span class="p">,</span> <span class="o">.</span><span class="mi">7</span><span class="p">],</span>
+                <span class="s">&quot;[&#39;hard&#39;, &#39;high&#39;]&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="mi">2</span><span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Intelligence&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;low&quot;</span><span class="p">,</span> <span class="s">&quot;high&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;SAT&quot;</span><span class="p">,</span> <span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">.</span><span class="mi">7</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">]</span>
+        <span class="p">},</span>
+
+        <span class="s">&quot;Difficulty&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&quot;ord&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s">&quot;numoutcomes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s">&quot;vals&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;easy&quot;</span><span class="p">,</span> <span class="s">&quot;hard&quot;</span><span class="p">],</span>
+            <span class="s">&quot;parents&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+            <span class="s">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;Grade&quot;</span><span class="p">],</span>
+            <span class="s">&quot;cprob&quot;</span><span class="p">:</span>  <span class="p">[</span><span class="o">.</span><span class="mi">6</span><span class="p">,</span> <span class="o">.</span><span class="mi">4</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="CPDtypes.html"
+                        title="previous chapter">CPDtypes</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="unittestlgdict.html"
+                        title="next chapter">linear gaussian bayesian network</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/unittestdict.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="unittestlgdict.html" title="linear gaussian bayesian network"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="CPDtypes.html" title="CPDtypes"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

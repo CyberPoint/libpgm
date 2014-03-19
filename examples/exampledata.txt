@@ -1,0 +1,74 @@
+# an example set of data to be used by the learning functions in the PGMlibrary
+# it is an array of dicts
+[
+  {
+    "Grade": "B", 
+    "Difficulty": "easy", 
+    "SAT": "lowscore", 
+    "Letter": "strong", 
+    "Intelligence": "high"
+  }, 
+  {
+    "Grade": "B", 
+    "Difficulty": "hard", 
+    "SAT": "lowscore", 
+    "Letter": "weak", 
+    "Intelligence": "low"
+  }, 
+  {
+    "Grade": "C", 
+    "Difficulty": "easy", 
+    "SAT": "lowscore", 
+    "Letter": "weak", 
+    "Intelligence": "low"
+  }, 
+  {
+    "Grade": "A", 
+    "Difficulty": "easy", 
+    "SAT": "highscore", 
+    "Letter": "strong", 
+    "Intelligence": "low"
+  }, 
+  {
+    "Grade": "B", 
+    "Difficulty": "easy", 
+    "SAT": "lowscore", 
+    "Letter": "weak", 
+    "Intelligence": "low"
+  }, 
+  {
+    "Grade": "A", 
+    "Difficulty": "easy", 
+    "SAT": "highscore", 
+    "Letter": "strong", 
+    "Intelligence": "high"
+  }, 
+  {
+    "Grade": "A", 
+    "Difficulty": "easy", 
+    "SAT": "highscore", 
+    "Letter": "strong", 
+    "Intelligence": "high"
+  }, 
+  {
+    "Grade": "C", 
+    "Difficulty": "easy", 
+    "SAT": "lowscore", 
+    "Letter": "weak", 
+    "Intelligence": "low"
+  }, 
+  {
+    "Grade": "C", 
+    "Difficulty": "hard", 
+    "SAT": "lowscore", 
+    "Letter": "weak", 
+    "Intelligence": "high"
+  }, 
+  {
+    "Grade": "A", 
+    "Difficulty": "easy", 
+    "SAT": "highscore", 
+    "Letter": "weak", 
+    "Intelligence": "high"
+  }
+]

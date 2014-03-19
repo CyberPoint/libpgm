@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tablecpdfactorization &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="tablecpdfactor" href="tablecpdfactor.html" />
+    <link rel="prev" title="dyndiscbayesiannetwork" href="dyndiscbayesiannetwork.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tablecpdfactor.html" title="tablecpdfactor"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dyndiscbayesiannetwork.html" title="dyndiscbayesiannetwork"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-libpgm.tablecpdfactorization">
+<span id="tablecpdfactorization"></span><h1>tablecpdfactorization<a class="headerlink" href="#module-libpgm.tablecpdfactorization" title="Permalink to this headline">¶</a></h1>
+<p>This module provides tools for creating and using factorized representations of Bayesian networks. Factorized representations of Bayesian networks are discrete CPDs whose values have been flattened into a single array, while the cardinalities and strides of each variable represented are kept track of separately. With the proper setup, these flattened structures can be more easily multiplied together, reduced, and operated on. For more information on factors cf. Koller et al. Ch. 4.</p>
+<dl class="class">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization">
+<em class="property">class </em><tt class="descclassname">libpgm.tablecpdfactorization.</tt><tt class="descname">TableCPDFactorization</tt><big>(</big><em>bn</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactorization.html#TableCPDFactorization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents a factorized Bayesian network with discrete CPD tables. It contains the attributes <em>bn</em>, <em>originalfactorlist</em>, and <em>factorlist</em>, and the methods <em>refresh</em>, <em>sumproductve</em>, <em>sumproducteliminatevar</em>, <em>condprobve</em>, <em>specificquery</em>, and <em>gibbssample</em>.</p>
+<p>This class is constructed with a <a class="reference internal" href="discretebayesiannetwork.html"><em>DiscreteBayesianNetwork</em></a> instance as argument. First, it takes the input itself and stores it in the <em>bn</em> attribute. Then, it transforms the information of each of these nodes from standard discrete CPD form into a <a class="reference internal" href="tablecpdfactor.html"><em>TableCPDFactor</em></a> isntance and stores the instances in an array in the attribute <em>originalfactorlist</em>. Finally, it makes a copy of this list to work with and stores it in <em>factorlist</em>.</p>
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.bn">
+<tt class="descname">bn</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.bn" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Bayesian network used as argument at instantiation.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.originalfactorlist">
+<tt class="descname">originalfactorlist</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.originalfactorlist" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of <a class="reference internal" href="tablecpdfactor.html"><em>TableCPDFactor</em></a> instances, one per node.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.factorlist">
+<tt class="descname">factorlist</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.factorlist" title="Permalink to this definition">¶</a></dt>
+<dd><p>A working copy of <em>originalfactorlist</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.refresh">
+<tt class="descname">refresh</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactorization.html#TableCPDFactorization.refresh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.refresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refresh the <em>factorlist</em> attribute to equate with <em>originalfactorlist</em>. This is in effect a reset of the system, erasing any changes to <em>factorlist</em> that the program has executed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.sumproducteliminatevar">
+<tt class="descname">sumproducteliminatevar</tt><big>(</big><em>vertex</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactorization.html#TableCPDFactorization.sumproducteliminatevar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.sumproducteliminatevar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiply the all the factors in <em>factorlist</em> that have <em>vertex</em> in their scope, then sum out <em>vertex</em> from the resulting product factor. Replace all factors that were multiplied together with the resulting summed-out product.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>vertex</em> - The name of the variable to eliminate.</li>
+</ol>
+</dd>
+<dt>Attributes modified:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>factorlist</em> &#8211; Modified to reflect the eliminated variable.</li>
+</ol>
+</dd>
+</dl>
+<p>For more information on this algorithm cf. Koller et al. 298</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.sumproductve">
+<tt class="descname">sumproductve</tt><big>(</big><em>vertices</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactorization.html#TableCPDFactorization.sumproductve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.sumproductve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eliminate each vertex in <em>vertices</em> from <em>factorlist</em> using <em>sumproducteliminatevar</em>.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>vertices</em> &#8211; A list of UUIDs of vertices to be eliminated.</li>
+</ol>
+</dd>
+<dt>Attributes modified: </dt>
+<dd><ol class="first last arabic simple">
+<li><em>factorlist</em> &#8211; modified to become a single factor representing the remaining variables.</li>
+</ol>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.condprobve">
+<tt class="descname">condprobve</tt><big>(</big><em>query</em>, <em>evidence</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactorization.html#TableCPDFactorization.condprobve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.condprobve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eliminate all variables in <em>factorlist</em> except for the ones queried. Adjust all distributions for the evidence given. Return the probability distribution over a set of variables given by the keys of <em>query</em> given <em>evidence</em>.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>query</em> &#8211; A dict containing (key: value) pairs reflecting (variable: value) that represents what outcome to calculate the probability of.</li>
+<li><em>evidence</em> &#8211; A dict containing (key: value) pairs reflecting (variable: value) that represents what is known about the system.</li>
+</ol>
+</dd>
+<dt>Attributes modified:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>factorlist</em> &#8211; Modified to be one factor representing the probability distribution of the query variables given the evidence.</li>
+</ol>
+</dd>
+</dl>
+<p>The function returns <em>factorlist</em> after it has been modified as above.</p>
+<p>Usage example: this code would return the distribution over a queried node, given evidence:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">libpgm.graphskeleton</span> <span class="kn">import</span> <span class="n">GraphSkeleton</span>
+<span class="kn">from</span> <span class="nn">libpgm.nodedata</span> <span class="kn">import</span> <span class="n">NodeData</span>
+<span class="kn">from</span> <span class="nn">libpgm.discretebayesiannetwork</span> <span class="kn">import</span> <span class="n">DiscreteBayesianNetwork</span>
+<span class="kn">from</span> <span class="nn">libpgm.tablecpdfactorization</span> <span class="kn">import</span> <span class="n">TableCPDFactorization</span>
+
+<span class="c"># load nodedata and graphskeleton</span>
+<span class="n">nd</span> <span class="o">=</span> <span class="n">NodeData</span><span class="p">()</span>
+<span class="n">skel</span> <span class="o">=</span> <span class="n">GraphSkeleton</span><span class="p">()</span>
+<span class="n">nd</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&quot;../tests/unittestdict.txt&quot;</span><span class="p">)</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&quot;../tests/unittestdict.txt&quot;</span><span class="p">)</span>
+
+<span class="c"># toporder graph skeleton</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">toporder</span><span class="p">()</span>
+
+<span class="c"># load evidence</span>
+<span class="n">evidence</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Letter</span><span class="o">=</span><span class="s">&#39;weak&#39;</span><span class="p">)</span>
+<span class="n">query</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Grade</span><span class="o">=</span><span class="s">&#39;A&#39;</span><span class="p">)</span>
+
+<span class="c"># load bayesian network</span>
+<span class="n">bn</span> <span class="o">=</span> <span class="n">DiscreteBayesianNetwork</span><span class="p">(</span><span class="n">skel</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+
+<span class="c"># load factorization</span>
+<span class="n">fn</span> <span class="o">=</span> <span class="n">TableCPDFactorization</span><span class="p">(</span><span class="n">bn</span><span class="p">)</span>
+
+<span class="c"># calculate probability distribution</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">condprobve</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">evidence</span><span class="p">)</span>
+
+<span class="c"># output</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">vals</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">scope</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">card</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stride</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.specificquery">
+<tt class="descname">specificquery</tt><big>(</big><em>query</em>, <em>evidence</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactorization.html#TableCPDFactorization.specificquery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.specificquery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eliminate all variables except for the ones specified by <em>query</em>. Adjust all distributions to reflect <em>evidence</em>. Return the entry that matches the exact probability of a specific event, as specified by <em>query</em>.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>query</em> &#8211; A dict containing (key: value) pairs reflecting (variable: value) that represents what outcome to calculate the probability of.</li>
+<li><em>evidence</em> &#8211; A dict containing (key: value) pairs reflecting (variable: value) evidence that is known about the system.</li>
+</ol>
+</dd>
+<dt>Attributes modified:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>factorlist</em> &#8211; Modified as in <em>condprobve</em>.</li>
+</ol>
+</dd>
+</dl>
+<p>The function then chooses the entries of <em>factorlist</em> that match the queried event or events. It then operates on them to return the probability that the event (or events) specified will occur, represented as a float between 0 and 1.</p>
+<p>Note that in this function, queries of the type P((x=A or x=B) and (y=C or y=D)) are permitted. They are executed by formatting the <em>query</em> dictionary like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;x&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span> <span class="s">&quot;B&quot;</span><span class="p">],</span>
+    <span class="s">&quot;y&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;C&quot;</span><span class="p">,</span> <span class="s">&quot;D&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Usage example: this code would answer the specific query that vertex <tt class="docutils literal"><span class="pre">Grade</span></tt> gets outcome <tt class="docutils literal"><span class="pre">A</span></tt> given that <tt class="docutils literal"><span class="pre">Letter</span></tt> has outcome <tt class="docutils literal"><span class="pre">weak</span></tt>, in <a class="reference internal" href="unittestdict.html"><em>this Bayesian network</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">libpgm.graphskeleton</span> <span class="kn">import</span> <span class="n">GraphSkeleton</span>
+<span class="kn">from</span> <span class="nn">libpgm.nodedata</span> <span class="kn">import</span> <span class="n">NodeData</span>
+<span class="kn">from</span> <span class="nn">libpgm.discretebayesiannetwork</span> <span class="kn">import</span> <span class="n">DiscreteBayesianNetwork</span>
+<span class="kn">from</span> <span class="nn">libpgm.tablecpdfactorization</span> <span class="kn">import</span> <span class="n">TableCPDFactorization</span>
+
+<span class="c"># load nodedata and graphskeleton</span>
+<span class="n">nd</span> <span class="o">=</span> <span class="n">NodeData</span><span class="p">()</span>
+<span class="n">skel</span> <span class="o">=</span> <span class="n">GraphSkeleton</span><span class="p">()</span>
+<span class="n">nd</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&quot;../tests/unittestdict.txt&quot;</span><span class="p">)</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&quot;../tests/unittestdict.txt&quot;</span><span class="p">)</span>
+
+<span class="c"># toporder graph skeleton</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">toporder</span><span class="p">()</span>
+
+<span class="c"># load evidence</span>
+<span class="n">evidence</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Letter</span><span class="o">=</span><span class="s">&#39;weak&#39;</span><span class="p">)</span>
+<span class="n">query</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Grade</span><span class="o">=</span><span class="s">&#39;A&#39;</span><span class="p">)</span>
+
+<span class="c"># load bayesian network</span>
+<span class="n">bn</span> <span class="o">=</span> <span class="n">DiscreteBayesianNetwork</span><span class="p">(</span><span class="n">skel</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+
+<span class="c"># load factorization</span>
+<span class="n">fn</span> <span class="o">=</span> <span class="n">TableCPDFactorization</span><span class="p">(</span><span class="n">bn</span><span class="p">)</span>
+
+<span class="c"># calculate probability distribution</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">specificquery</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">evidence</span><span class="p">)</span>
+
+<span class="c"># output</span>
+<span class="k">print</span> <span class="n">result</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactorization.TableCPDFactorization.gibbssample">
+<tt class="descname">gibbssample</tt><big>(</big><em>evidence</em>, <em>n</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactorization.html#TableCPDFactorization.gibbssample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactorization.TableCPDFactorization.gibbssample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a sequence of <em>n</em> samples using the Gibbs sampling method, given evidence specified by <em>evidence</em>. Gibbs sampling is a technique wherein for each sample, each variable in turn is erased and calculated conditioned on the outcomes of its neighbors. This method starts by sampling from the &#8216;prior distribution,&#8217; which is the distribution not conditioned on evidence, but the samples provably get closer and closer to the posterior distribution, which is the distribution conditioned on the evidence. It is thus a good way to deal with evidence when generating random samples.</p>
+<dl class="docutils">
+<dt>Arguments: </dt>
+<dd><ol class="first last arabic simple">
+<li><em>evidence</em> &#8211; A dict containing (key: value) pairs reflecting (variable: value) that represents what is known about the system.</li>
+<li><em>n</em> &#8211; The number of samples to return.</li>
+</ol>
+</dd>
+</dl>
+<p>Returns:</p>
+<p>A list of <em>n</em> random samples, each element of which is a dict containing (vertex: value) pairs.</p>
+<p>For more information, cf. Koller et al. Ch. 12.3.1</p>
+<p>Usage example: This code would generate a sequence of 10 samples:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">libpgm.graphskeleton</span> <span class="kn">import</span> <span class="n">GraphSkeleton</span>
+<span class="kn">from</span> <span class="nn">libpgm.nodedata</span> <span class="kn">import</span> <span class="n">NodeData</span>
+<span class="kn">from</span> <span class="nn">libpgm.discretebayesiannetwork</span> <span class="kn">import</span> <span class="n">DiscreteBayesianNetwork</span>
+<span class="kn">from</span> <span class="nn">libpgm.tablecpdfactorization</span> <span class="kn">import</span> <span class="n">TableCPDFactorization</span>
+
+<span class="c"># load nodedata and graphskeleton</span>
+<span class="n">nd</span> <span class="o">=</span> <span class="n">NodeData</span><span class="p">()</span>
+<span class="n">skel</span> <span class="o">=</span> <span class="n">GraphSkeleton</span><span class="p">()</span>
+<span class="n">nd</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&quot;../tests/unittestdict.txt&quot;</span><span class="p">)</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&quot;../tests/unittestdict.txt&quot;</span><span class="p">)</span>
+
+<span class="c"># toporder graph skeleton</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">toporder</span><span class="p">()</span>
+
+<span class="c"># load evidence</span>
+<span class="n">evidence</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Letter</span><span class="o">=</span><span class="s">&#39;weak&#39;</span><span class="p">)</span>
+
+<span class="c"># load bayesian network</span>
+<span class="n">bn</span> <span class="o">=</span> <span class="n">DiscreteBayesianNetwork</span><span class="p">(</span><span class="n">skel</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+
+<span class="c"># load factorization</span>
+<span class="n">fn</span> <span class="o">=</span> <span class="n">TableCPDFactorization</span><span class="p">(</span><span class="n">bn</span><span class="p">)</span>
+
+<span class="c"># sample </span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">gibbssample</span><span class="p">(</span><span class="n">evidence</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c"># output</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dyndiscbayesiannetwork.html"
+                        title="previous chapter">dyndiscbayesiannetwork</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tablecpdfactor.html"
+                        title="next chapter">tablecpdfactor</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/tablecpdfactorization.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tablecpdfactor.html" title="tablecpdfactor"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dyndiscbayesiannetwork.html" title="dyndiscbayesiannetwork"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

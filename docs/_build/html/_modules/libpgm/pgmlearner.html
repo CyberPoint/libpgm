@@ -1,0 +1,1057 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>libpgm.pgmlearner &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for libpgm.pgmlearner</h1><div class="highlight"><pre>
+<span class="c"># Copyright (c) 2012, CyberPoint International, LLC</span>
+<span class="c"># All rights reserved.</span>
+<span class="c"># </span>
+<span class="c"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer.</span>
+<span class="c">#     * Redistributions in binary form must reproduce the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer in the</span>
+<span class="c">#       documentation and/or other materials provided with the distribution.</span>
+<span class="c">#     * Neither the name of the CyberPoint International, LLC nor the</span>
+<span class="c">#       names of its contributors may be used to endorse or promote products</span>
+<span class="c">#       derived from this software without specific prior written permission.</span>
+<span class="c"># </span>
+<span class="c"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="c"># ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="c"># WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c"># DISCLAIMED. IN NO EVENT SHALL CYBERPOINT INTERNATIONAL, LLC BE LIABLE FOR ANY</span>
+<span class="c"># DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="c"># (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="c"># LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND</span>
+<span class="c"># ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="c"># SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module provides tools to generate Bayesian networks that are &quot;learned&quot; from a data set. The learning process involves finding the Bayesian network that most accurately models data given as input -- in other words, finding the Bayesian network that makes the data set most likely. There are two major parts of Bayesian network learning: structure learning and parameter learning. Structure learning means finding the graph that most accurately depicts the dependencies detected in the data. Parameter learning means adjusting the parameters of the CPDs in a graph skeleton to most accurately model the data. This module has tools for both of these tasks.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">,</span> <span class="s">&quot;numpy is not installed on your system.&quot;</span>
+
+<span class="k">try</span><span class="p">:</span> 
+    <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">chisquare</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">,</span> <span class="s">&quot;scipy is not installed on your system.&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">graphskeleton</span> <span class="kn">import</span> <span class="n">GraphSkeleton</span>
+<span class="kn">from</span> <span class="nn">discretebayesiannetwork</span> <span class="kn">import</span> <span class="n">DiscreteBayesianNetwork</span>
+<span class="kn">from</span> <span class="nn">lgbayesiannetwork</span> <span class="kn">import</span> <span class="n">LGBayesianNetwork</span>
+<span class="kn">from</span> <span class="nn">sampleaggregator</span> <span class="kn">import</span> <span class="n">SampleAggregator</span>
+
+<div class="viewcode-block" id="PGMLearner"><a class="viewcode-back" href="../../pgmlearner.html#libpgm.pgmlearner.PGMLearner">[docs]</a><span class="k">class</span> <span class="nc">PGMLearner</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This class is a machine with tools for learning Bayesian networks from data. It contains the *discrete_mle_estimateparams*, *lg_mle_estimateparams*, *discrete_constraint_estimatestruct*, *lg_constraint_estimatestruct*, *discrete_condind*, *discrete_estimatebn*, and *lg_estimatebn* methods.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="PGMLearner.discrete_mle_estimateparams"><a class="viewcode-back" href="../../pgmlearner.html#libpgm.pgmlearner.PGMLearner.discrete_mle_estimateparams">[docs]</a>    <span class="k">def</span> <span class="nf">discrete_mle_estimateparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graphskeleton</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Estimate parameters for a discrete Bayesian network with a structure given by *graphskeleton* in order to maximize the probability of data given by *data*. This function takes the following arguments:</span>
+
+<span class="sd">            1. *graphskeleton* -- An instance of the :doc:`GraphSkeleton &lt;graphskeleton&gt;` class containing vertex and edge data.</span>
+<span class="sd">            2. *data* -- A list of dicts containing samples from the network in {vertex: value} format. Example::</span>
+
+<span class="sd">                    [</span>
+<span class="sd">                        {</span>
+<span class="sd">                            &#39;Grade&#39;: &#39;B&#39;,</span>
+<span class="sd">                            &#39;SAT&#39;: &#39;lowscore&#39;,</span>
+<span class="sd">                            ...</span>
+<span class="sd">                        },</span>
+<span class="sd">                        ...</span>
+<span class="sd">                    ]</span>
+
+<span class="sd">        This function normalizes the distribution of a node&#39;s outcomes for each combination of its parents&#39; outcomes. In doing so it creates an estimated tabular conditional probability distribution for each node. It then instantiates a :doc:`DiscreteBayesianNetwork &lt;discretebayesiannetwork&gt;` instance based on the *graphskeleton*, and modifies that instance&#39;s *Vdata* attribute to reflect the estimated CPDs. It then returns the instance. </span>
+
+<span class="sd">        The Vdata attribute instantiated is in the format seen in :doc:`unittestdict`, as described in :doc:`discretebayesiannetwork`.</span>
+
+<span class="sd">        Usage example: this would learn parameters from a set of 200 discrete samples::</span>
+
+<span class="sd">            import json</span>
+
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.discretebayesiannetwork import DiscreteBayesianNetwork</span>
+<span class="sd">            from libpgm.pgmlearner import PGMLearner</span>
+<span class="sd">            </span>
+<span class="sd">            # generate some data to use</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestdict.txt&quot;)    # an input file</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.toporder()</span>
+<span class="sd">            bn = DiscreteBayesianNetwork(skel, nd)</span>
+<span class="sd">            data = bn.randomsample(200)</span>
+
+<span class="sd">            # instantiate my learner </span>
+<span class="sd">            learner = PGMLearner()</span>
+
+<span class="sd">            # estimate parameters from data and skeleton</span>
+<span class="sd">            result = learner.discrete_mle_estimateparams(skel, data)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result.Vdata, indent=2)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">graphskeleton</span><span class="p">,</span> <span class="n">GraphSkeleton</span><span class="p">)),</span> <span class="s">&quot;First arg must be a loaded GraphSkeleton class.&quot;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)),</span> <span class="s">&quot;Second arg must be a list of dicts.&quot;</span>
+
+        <span class="c"># instantiate Bayesian network, and add parent and children data</span>
+        <span class="n">bn</span> <span class="o">=</span> <span class="n">DiscreteBayesianNetwork</span><span class="p">()</span>
+        <span class="n">graphskeleton</span><span class="o">.</span><span class="n">toporder</span><span class="p">()</span>
+        <span class="n">bn</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">graphskeleton</span><span class="o">.</span><span class="n">V</span>
+        <span class="n">bn</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">graphskeleton</span><span class="o">.</span><span class="n">E</span>
+        <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">:</span> 
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;children&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">graphskeleton</span><span class="o">.</span><span class="n">getchildren</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">graphskeleton</span><span class="o">.</span><span class="n">getparents</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+            
+            <span class="c"># make placeholders for vals, cprob, and numoutcomes</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;vals&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[]):</span>
+                <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;numoutcomes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c"># determine which outcomes are possible for each node</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">vertex</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;vals&quot;</span><span class="p">]):</span>
+                    <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;vals&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">vertex</span><span class="p">])</span>
+                    <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;numoutcomes&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># lay out probability tables, and put a [num, denom] entry in all spots:</span>
+
+        <span class="c"># define helper function to recursively set up cprob table</span>
+        <span class="k">def</span> <span class="nf">addlevel</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">_dict</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">totaldepth</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">depth</span> <span class="o">==</span> <span class="n">totaldepth</span><span class="p">:</span>
+                <span class="n">_dict</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;numoutcomes&quot;</span><span class="p">]):</span>
+                    <span class="n">_dict</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">][</span><span class="n">depth</span><span class="p">]][</span><span class="s">&quot;vals&quot;</span><span class="p">]:</span>
+                    <span class="n">ckey</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:]</span>
+                    <span class="n">ckey</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+                    <span class="n">addlevel</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">_dict</span><span class="p">,</span> <span class="n">ckey</span><span class="p">,</span> <span class="n">depth</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">totaldepth</span><span class="p">)</span>
+
+        <span class="c"># put [0, 0] at each entry of cprob table</span>
+        <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]):</span>
+                <span class="n">root</span> <span class="o">=</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span>
+                <span class="n">numparents</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">])</span>
+                <span class="n">addlevel</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="p">[],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">numparents</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;numoutcomes&quot;</span><span class="p">]):</span>
+                    <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+        <span class="c"># fill out entries with samples:</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">:</span>
+                    
+                <span class="c"># compute index of result</span>
+                <span class="n">rindex</span> <span class="o">=</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;vals&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">vertex</span><span class="p">])</span>
+
+                <span class="c"># go to correct place in Vdata</span>
+                <span class="k">if</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]:</span>
+                    <span class="n">pvals</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]]</span>
+                    <span class="n">lev</span> <span class="o">=</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">][</span><span class="nb">str</span><span class="p">(</span><span class="n">pvals</span><span class="p">)]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lev</span> <span class="o">=</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span>
+
+                <span class="c"># increase all denominators for the current condition</span>
+                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">lev</span><span class="p">:</span>
+                    <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="c"># increase numerator for current outcome</span>
+                <span class="n">lev</span><span class="p">[</span><span class="n">rindex</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># convert arrays to floats</span>
+        <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]:</span>
+                <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">try</span><span class="p">:</span> 
+                        <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]]</span>
+                        
+                    <span class="c"># default to even distribution if no data points</span>
+                    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+                        <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;numoutcomes&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]]</span>
+
+        <span class="c"># return cprob table with estimated probability distributions</span>
+        <span class="k">return</span> <span class="n">bn</span>
+</div>
+<div class="viewcode-block" id="PGMLearner.lg_mle_estimateparams"><a class="viewcode-back" href="../../pgmlearner.html#libpgm.pgmlearner.PGMLearner.lg_mle_estimateparams">[docs]</a>    <span class="k">def</span> <span class="nf">lg_mle_estimateparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graphskeleton</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Estimate parameters for a linear Gaussian Bayesian network with a structure given by *graphskeleton* in order to maximize the probability of data given by *data*. This function takes the following arguments:</span>
+
+<span class="sd">            1. *graphskeleton* -- An instance of the :doc:`GraphSkeleton &lt;graphskeleton&gt;` class containing vertex and edge data.</span>
+<span class="sd">            2. *data* -- A list of dicts containing samples from the network in {vertex: value} format. Example::</span>
+
+<span class="sd">                    [</span>
+<span class="sd">                        {</span>
+<span class="sd">                            &#39;Grade&#39;: 74.343,</span>
+<span class="sd">                            &#39;Intelligence&#39;: 29.545,</span>
+<span class="sd">                            ...</span>
+<span class="sd">                        },</span>
+<span class="sd">                        ...</span>
+<span class="sd">                    ]</span>
+
+<span class="sd">        The algorithm used to calculate the linear Gaussian parameters is beyond the scope of this documentation -- for a full explanation, cf. Koller et al. 729. After the parameters are calculated, the program instantiates a :doc:`DiscreteBayesianNetwork &lt;discretebayesiannetwork&gt;` instance based on the *graphskeleton*, and modifies that instance&#39;s *Vdata* attribute to reflect the estimated CPDs. It then returns the instance. </span>
+
+<span class="sd">        The Vdata attribute instantiated is in the format seen in the input file example :doc:`unittestdict`, as described in :doc:`discretebayesiannetwork`.</span>
+
+<span class="sd">        Usage example: this would learn parameters from a set of 200 linear Gaussian samples::</span>
+
+<span class="sd">            import json</span>
+
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.lgbayesiannetwork import LGBayesianNetwork</span>
+<span class="sd">            from libpgm.pgmlearner import PGMLearner</span>
+<span class="sd">            </span>
+<span class="sd">            # generate some data to use</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestlgdict.txt&quot;)    # an input file</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.toporder()</span>
+<span class="sd">            lgbn = LGBayesianNetwork(skel, nd)</span>
+<span class="sd">            data = lgbn.randomsample(200)</span>
+<span class="sd">        </span>
+<span class="sd">            # instantiate my learner </span>
+<span class="sd">            learner = PGMLearner()</span>
+
+<span class="sd">            # estimate parameters</span>
+<span class="sd">            result = learner.lg_mle_estimateparams(skel, data)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result.Vdata, indent=2)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">graphskeleton</span><span class="p">,</span> <span class="n">GraphSkeleton</span><span class="p">)),</span> <span class="s">&quot;First arg must be a loaded GraphSkeleton class.&quot;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)),</span> <span class="s">&quot;Second arg must be a list of dicts.&quot;</span>
+
+        <span class="c"># instantiate Bayesian network, and add parent and children data</span>
+        <span class="n">bn</span> <span class="o">=</span> <span class="n">LGBayesianNetwork</span><span class="p">()</span>
+        <span class="n">graphskeleton</span><span class="o">.</span><span class="n">toporder</span><span class="p">()</span>
+        <span class="n">bn</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">graphskeleton</span><span class="o">.</span><span class="n">V</span>
+        <span class="n">bn</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">graphskeleton</span><span class="o">.</span><span class="n">E</span>
+        <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">:</span> 
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;children&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">graphskeleton</span><span class="o">.</span><span class="n">getchildren</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">graphskeleton</span><span class="o">.</span><span class="n">getparents</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+            
+            <span class="c"># make placeholders for mean_base, mean_scal, and variance</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;mean_base&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;mean_scal&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]:</span>
+                <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;mean_scal&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;variance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c"># make covariance table, array of E[X_i] for each vertex, and table</span>
+        <span class="c"># of E[X_i * X_j] for each combination of vertices</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">))]</span> <span class="k">for</span> <span class="n">__</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">))]</span>
+        <span class="n">singletons</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">))]</span>
+        <span class="n">numtrials</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">)):</span>
+                <span class="n">singletons</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sample</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">)):</span>
+                    <span class="n">cov</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sample</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span> <span class="o">*</span> <span class="n">sample</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">y</span><span class="p">]]</span>
+        
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">)):</span>
+            <span class="n">singletons</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">float</span><span class="p">(</span><span class="n">numtrials</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">)):</span>
+                <span class="n">cov</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">float</span><span class="p">(</span><span class="n">numtrials</span><span class="p">)</span>
+
+        <span class="c"># (save copy. this is the E[X_i * X_j] table) </span>
+        <span class="n">product_expectations</span> <span class="o">=</span> <span class="p">[[</span><span class="n">cov</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">))]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">))]</span> 
+
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">)):</span>
+                <span class="n">cov</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">cov</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">singletons</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="n">singletons</span><span class="p">[</span><span class="n">y</span><span class="p">])</span>
+        
+        <span class="c"># construct system of equations and solve (for each node)</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">)):</span>
+            
+            <span class="c"># start with the E[X_i * X_j] table</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="p">[[</span><span class="n">product_expectations</span><span class="p">[</span><span class="n">p</span><span class="p">][</span><span class="n">q</span><span class="p">]</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">))]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">))]</span>
+            
+            <span class="c"># step 0: remove all entries from all the tables except for node and its parents</span>
+            <span class="n">rowstokeep</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">z</span><span class="p">]</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">x</span><span class="p">]][</span><span class="s">&quot;parents&quot;</span><span class="p">]:</span>
+                    <span class="n">rowstokeep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+            <span class="n">smalldim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rowstokeep</span><span class="p">)</span>
+            <span class="n">smallsystem</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">)]</span> <span class="k">for</span> <span class="n">__</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">)]</span>
+            <span class="n">smallcov</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">)]</span> <span class="k">for</span> <span class="n">__</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">)]</span>
+            <span class="n">smallsing</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rowstokeep</span><span class="p">)):</span>
+                <span class="n">smallsing</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">singletons</span><span class="p">[</span><span class="n">rowstokeep</span><span class="p">[</span><span class="n">index</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">index2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rowstokeep</span><span class="p">)):</span>
+                    <span class="n">smallsystem</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">index2</span><span class="p">]</span> <span class="o">=</span> <span class="n">system</span><span class="p">[</span><span class="n">rowstokeep</span><span class="p">[</span><span class="n">index</span><span class="p">]][</span><span class="n">rowstokeep</span><span class="p">[</span><span class="n">index2</span><span class="p">]]</span>
+                    <span class="n">smallcov</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">index2</span><span class="p">]</span> <span class="o">=</span> <span class="n">cov</span><span class="p">[</span><span class="n">rowstokeep</span><span class="p">[</span><span class="n">index</span><span class="p">]][</span><span class="n">rowstokeep</span><span class="p">[</span><span class="n">index2</span><span class="p">]]</span>
+        
+            <span class="c"># step 1: delete and copy row corresponding to node (using [row][column] notation)</span>
+            <span class="n">tmparray</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">):</span>
+                        <span class="n">smallsystem</span><span class="p">[</span><span class="n">y</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">smallsystem</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">):</span>
+                        <span class="n">tmparray</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">smallsystem</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+         
+            <span class="c"># step 2: delete column, leaving system with all entries</span>
+            <span class="c"># corresponding to parents of node</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">):</span>
+                        <span class="n">smallsystem</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">y</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">smallsystem</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">y</span><span class="p">]</span>
+
+            <span class="c"># step 3: take entry for node out of singleton array and store it</span>
+            <span class="n">bordarray</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">bordarray</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">smallsing</span><span class="p">[</span><span class="n">y</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">tmpentry</span> <span class="o">=</span> <span class="n">smallsing</span><span class="p">[</span><span class="n">y</span><span class="p">]</span>
+
+            <span class="c"># step 4: add border array on borders of system</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bordarray</span><span class="p">)):</span>
+                <span class="n">smallsystem</span><span class="p">[</span><span class="n">smalldim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">bordarray</span><span class="p">[</span><span class="n">y</span><span class="p">]</span>
+                <span class="n">smallsystem</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">smalldim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">bordarray</span><span class="p">[</span><span class="n">y</span><span class="p">]</span>
+            <span class="n">smallsystem</span><span class="p">[</span><span class="n">smalldim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">smalldim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="c"># step 5: construct equality vector (the &#39;b&#39; of ax = b)</span>
+            <span class="n">evector</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="o">!=</span> <span class="n">smalldim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">evector</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmparray</span><span class="p">[</span><span class="n">y</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">evector</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmpentry</span>
+
+            <span class="c"># use numpy to solve</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">smallsystem</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">evector</span><span class="p">)</span>
+            <span class="n">solve</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+            
+            <span class="c"># fill mean_base and mean_scal[] with this data</span>
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">x</span><span class="p">]][</span><span class="s">&quot;mean_base&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">solve</span><span class="p">[</span><span class="n">smalldim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">smalldim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">x</span><span class="p">]][</span><span class="s">&quot;mean_scal&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">solve</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="c"># add variance</span>
+            <span class="n">variance</span> <span class="o">=</span> <span class="n">smallcov</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">smalldim</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">smalldim</span><span class="p">):</span>
+                    <span class="n">variance</span> <span class="o">-=</span> <span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">x</span><span class="p">]][</span><span class="s">&quot;mean_scal&quot;</span><span class="p">][</span><span class="n">y</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">x</span><span class="p">]][</span><span class="s">&quot;mean_scal&quot;</span><span class="p">][</span><span class="n">z</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">smallcov</span><span class="p">[</span><span class="n">y</span><span class="p">][</span><span class="n">z</span><span class="p">])</span> 
+            <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">[</span><span class="n">x</span><span class="p">]][</span><span class="s">&quot;variance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">variance</span>
+
+        <span class="c"># that&#39;s all folks</span>
+        <span class="k">return</span> <span class="n">bn</span>
+</div>
+<div class="viewcode-block" id="PGMLearner.discrete_constraint_estimatestruct"><a class="viewcode-back" href="../../pgmlearner.html#libpgm.pgmlearner.PGMLearner.discrete_constraint_estimatestruct">[docs]</a>    <span class="k">def</span> <span class="nf">discrete_constraint_estimatestruct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">pvalparam</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">indegree</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Learn a Bayesian network structure from discrete data given by *data*, using constraint-based approaches. This function first calculates all the independencies and conditional independencies present between variables in the data. To calculate dependencies, it uses the *discrete_condind* method on each pair of variables, conditioned on other sets of variables of size *indegree* or smaller, to generate a chi-squared result and a p-value. If this p-value is less than *pvalparam*, the pair of variables are considered dependent conditioned on the variable set. Once all true dependencies -- pairs of variables that are dependent no matter what they are conditioned by -- are found, the algorithm uses these dependencies to construct a directed acyclic graph. It returns this DAG in the form of a :doc:`GraphSkeleton &lt;graphskeleton&gt;` class. </span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *data* -- An array of dicts containing samples from the network in {vertex: value} format. Example::</span>
+
+<span class="sd">                    [</span>
+<span class="sd">                        {</span>
+<span class="sd">                            &#39;Grade&#39;: &#39;B&#39;,</span>
+<span class="sd">                            &#39;SAT&#39;: &#39;lowscore&#39;,</span>
+<span class="sd">                            ...</span>
+<span class="sd">                        },</span>
+<span class="sd">                        ...</span>
+<span class="sd">                    ]</span>
+
+<span class="sd">            2. *pvalparam* -- (Optional, default is 0.05) The p-value below which to consider something significantly unlikely. A common number used is 0.05. This is passed to *discrete_condind* when it is called.</span>
+<span class="sd">            3. *indegree* -- (Optional, default is 1) The upper bound on the size of a witness set (see Koller et al. 85). If this is larger than 1, a huge amount of samples in *data* are required to avoid a divide-by-zero error.</span>
+
+<span class="sd">        Usage example: this would learn structure from a set of 8000 discrete samples::</span>
+
+<span class="sd">            import json</span>
+
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.discretebayesiannetwork import DiscreteBayesianNetwork</span>
+<span class="sd">            from libpgm.pgmlearner import PGMLearner</span>
+<span class="sd">            </span>
+<span class="sd">            # generate some data to use</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestdict.txt&quot;)    # an input file</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.toporder()</span>
+<span class="sd">            bn = DiscreteBayesianNetwork(skel, nd)</span>
+<span class="sd">            data = bn.randomsample(8000)</span>
+
+<span class="sd">            # instantiate my learner </span>
+<span class="sd">            learner = PGMLearner()</span>
+
+<span class="sd">            # estimate structure</span>
+<span class="sd">            result = learner.discrete_constraint_estimatestruct(data)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result.E, indent=2)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)),</span> <span class="s">&quot;Arg must be a list of dicts.&quot;</span>
+
+        <span class="c"># instantiate array of variables and array of potential dependencies</span>
+        <span class="n">variables</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">ovariables</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[:]</span>
+        <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+            <span class="n">ovariables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">ovariables</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">!=</span> <span class="n">y</span><span class="p">):</span>
+                    <span class="n">dependencies</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span>
+
+
+        <span class="c"># define helper function to find subsets</span>
+        <span class="k">def</span> <span class="nf">subsets</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">indegree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">comb</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">comb</span><span class="p">:</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="n">witnesses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">othervariables</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[:]</span>
+
+        <span class="c"># for each pair of variables X, Y:</span>
+        <span class="k">for</span> <span class="n">X</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+            <span class="n">othervariables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">Y</span> <span class="ow">in</span> <span class="n">othervariables</span><span class="p">:</span>
+
+                <span class="c"># consider all sets of witnesses that do not have X or Y in</span>
+                <span class="c"># them, and are less than or equal to the size specified by </span>
+                <span class="c"># the &quot;indegree&quot; argument</span>
+                <span class="k">for</span> <span class="n">U</span> <span class="ow">in</span> <span class="n">subsets</span><span class="p">(</span><span class="n">variables</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">X</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">U</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Y</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">U</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">indegree</span><span class="p">:</span>
+                        
+                        <span class="c"># determine conditional independence</span>
+                        <span class="n">chi</span><span class="p">,</span> <span class="n">pv</span><span class="p">,</span> <span class="n">witness</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discrete_condind</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">pv</span> <span class="o">&gt;</span> <span class="n">pvalparam</span><span class="p">:</span> 
+                            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;***</span><span class="si">%s</span><span class="s"> and </span><span class="si">%s</span><span class="s"> are found independent (chi = </span><span class="si">%f</span><span class="s">, pv = </span><span class="si">%f</span><span class="s">) with witness </span><span class="si">%s</span><span class="s">***&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">chi</span><span class="p">,</span> <span class="n">pv</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">dependencies</span><span class="o">.</span><span class="n">remove</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">])</span>
+                                <span class="n">dependencies</span><span class="o">.</span><span class="n">remove</span><span class="p">([</span><span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">])</span>
+                            <span class="k">except</span><span class="p">:</span>
+                                <span class="k">pass</span>
+                            <span class="n">witnesses</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">witness</span><span class="p">])</span>
+                            <span class="k">break</span>
+
+        <span class="c"># now that we have found our dependencies, run build PDAG (cf. Koller p. 89) </span>
+        <span class="c"># with the stored set of independencies:</span>
+        
+        <span class="c"># assemble undirected graph skeleton</span>
+        <span class="n">pdag</span> <span class="o">=</span> <span class="n">GraphSkeleton</span><span class="p">()</span>
+        <span class="n">pdag</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">dependencies</span>
+        <span class="n">pdag</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">variables</span>
+        
+        <span class="c"># adjust for immoralities (cf. Koller 86)</span>
+        <span class="n">dedges</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pdag</span><span class="o">.</span><span class="n">E</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">dedges</span><span class="p">:</span>
+            <span class="n">edge</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;u&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">edge1</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">dedges</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">edge2</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">dedges</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">edge1</span> <span class="ow">in</span> <span class="n">dedges</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">edge2</span> <span class="ow">in</span> <span class="n">dedges</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="p">(([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">witnesses</span><span class="p">)</span> <span class="ow">and</span> <span class="p">([</span><span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">witnesses</span><span class="p">)):</span> 
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge1</span><span class="p">)</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="p">(([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">witnesses</span><span class="p">)</span> <span class="ow">and</span> <span class="p">([</span><span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">witnesses</span><span class="p">)):</span> 
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge1</span><span class="p">)</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="p">(([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">witnesses</span><span class="p">)</span> <span class="ow">and</span> <span class="p">([</span><span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">witnesses</span><span class="p">)):</span> 
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge1</span><span class="p">)</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="p">(([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">witnesses</span><span class="p">)</span> <span class="ow">and</span> <span class="p">([</span><span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">witnesses</span><span class="p">)):</span> 
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge1</span><span class="p">)</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span>
+
+        <span class="c"># define helper method &quot;exists_undirected_edge&quot;</span>
+        <span class="k">def</span> <span class="nf">exists_undirected_edge</span><span class="p">(</span><span class="n">one_end</span><span class="p">,</span> <span class="n">the_other_end</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">dedges</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">one_end</span> <span class="ow">and</span> <span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">the_other_end</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="bp">True</span>
+                    <span class="k">elif</span> <span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">one_end</span> <span class="ow">and</span> <span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">the_other_end</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="bp">True</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="c"># use right hand rules to improve graph until convergence (Koller 89)</span>
+        <span class="n">olddedges</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">olddedges</span> <span class="o">!=</span> <span class="n">dedges</span><span class="p">):</span>
+            <span class="n">olddedges</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dedges</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">edge1</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">dedges</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">edge2</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">dedges</span><span class="p">):</span>
+                    
+                    <span class="c"># rule 1</span>
+                    <span class="n">inverted</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="n">check1</span><span class="p">,</span> <span class="n">check2</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">True</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">):</span>
+                        <span class="n">check1</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="k">elif</span> <span class="p">(</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">):</span>
+                        <span class="n">check</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">inverted</span> <span class="o">=</span> <span class="bp">True</span> 
+                    <span class="k">for</span> <span class="n">edge3</span> <span class="ow">in</span> <span class="n">dedges</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">edge3</span> <span class="o">!=</span> <span class="n">edge1</span> <span class="ow">and</span> <span class="p">((</span><span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                            <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">])):</span>
+                            <span class="n">check2</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="k">if</span> <span class="n">check1</span> <span class="o">==</span> <span class="bp">True</span> <span class="ow">and</span> <span class="n">check2</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">inverted</span><span class="p">:</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                        <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span>
+
+                    <span class="c"># rule 2</span>
+                    <span class="n">check1</span><span class="p">,</span> <span class="n">check2</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">False</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
+                        <span class="n">check1</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="k">for</span> <span class="n">edge3</span> <span class="ow">in</span> <span class="n">dedges</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="p">((</span><span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                            <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge3</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">):</span>
+                            <span class="n">check2</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="k">if</span> <span class="n">check1</span> <span class="o">==</span> <span class="bp">True</span> <span class="ow">and</span> <span class="n">check2</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                        <span class="k">elif</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                            <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                        <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge3</span><span class="p">)</span>
+
+                    <span class="c"># rule 3</span>
+                    <span class="n">check1</span><span class="p">,</span> <span class="n">check2</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">False</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">edge2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                            <span class="n">check1</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">exists_undirected_edge</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">and</span>
+                            <span class="n">exists_undirected_edge</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">and</span>
+                            <span class="n">exists_undirected_edge</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">edge2</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+                            <span class="n">check2</span> <span class="o">=</span> <span class="bp">True</span>
+                            <span class="k">if</span> <span class="n">check1</span> <span class="o">==</span> <span class="bp">True</span> <span class="ow">and</span> <span class="n">check2</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                                <span class="n">dedges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">v</span><span class="p">,</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                                <span class="k">for</span> <span class="n">edge3</span> <span class="ow">in</span> <span class="n">dedges</span><span class="p">:</span>
+                                    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">edge3</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="p">((</span><span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">v</span> <span class="ow">and</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                                        <span class="o">==</span> <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="n">edge3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">v</span> <span class="ow">and</span> <span class="n">edge3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span>
+                                        <span class="n">edge1</span><span class="p">[</span><span class="mi">1</span><span class="p">]))):</span>
+                                        <span class="n">dedges</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">edge3</span><span class="p">)</span>
+                    
+
+        <span class="c"># return one possible graph skeleton from the pdag class found</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dedges</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dedges</span><span class="p">[</span><span class="n">x</span><span class="p">])</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">dedges</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">dedges</span><span class="p">[</span><span class="n">x</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
+        
+        <span class="n">pdag</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">dedges</span>
+        <span class="n">pdag</span><span class="o">.</span><span class="n">toporder</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">pdag</span>
+</div>
+<div class="viewcode-block" id="PGMLearner.lg_constraint_estimatestruct"><a class="viewcode-back" href="../../pgmlearner.html#libpgm.pgmlearner.PGMLearner.lg_constraint_estimatestruct">[docs]</a>    <span class="k">def</span> <span class="nf">lg_constraint_estimatestruct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">pvalparam</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">indegree</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Learn a Bayesian network structure from linear Gaussian data given by *data* using constraint-based approaches. This function works by discretizing the linear Gaussian data into *bins* number of bins, and running the *discrete_constraint_estimatestruct* method on that discrete data with *pvalparam* and *indegree* as arguments. It returns the :doc:`GraphSkeleton &lt;graphskeleton&gt;` instance returned by this function. </span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *data* -- An array of dicts containing samples from the network in {vertex: value} format. Example::</span>
+
+<span class="sd">                    [</span>
+<span class="sd">                        {</span>
+<span class="sd">                            &#39;Grade&#39;: 78.3223,</span>
+<span class="sd">                            &#39;SAT&#39;: 56.33,</span>
+<span class="sd">                            ...</span>
+<span class="sd">                        },</span>
+<span class="sd">                        ...</span>
+<span class="sd">                    ]</span>
+
+<span class="sd">            2. *pvalparam* -- (Optional, default is 0.05) The p-value below which to consider something significantly unlikely. A common number used is 0.05</span>
+<span class="sd">            3. *bins* -- (Optional, default is 10) The number of bins to discretize the data into. The method is to find the highest and lowest value, divide that interval uniformly into a certain number of bins, and place the data inside. This number must be chosen carefully in light of the number of trials. There must be at least 5 trials in every bin, with more if the indegree is increased.</span>
+<span class="sd">            4. *indegree* -- (Optional, default is 1) The upper bound on the size of a witness set (see Koller et al. 85). If this is larger than 1, a huge amount of trials are required to avoid a divide-by-zero error.</span>
+
+<span class="sd">        The number of bins and indegree must be chosen carefully based on the size and nature of the data set. Too many bins will lead to not enough data per bin, while too few bins will lead to dependencies not getting noticed.</span>
+
+<span class="sd">        Usage example: this would learn structure from a set of 8000 linear Gaussian samples::</span>
+
+<span class="sd">            import json</span>
+
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.lgbayesiannetwork import LGBayesianNetwork</span>
+<span class="sd">            from libpgm.pgmlearner import PGMLearner</span>
+<span class="sd">            </span>
+<span class="sd">            # generate some data to use</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestdict.txt&quot;)    # an input file</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.toporder()</span>
+<span class="sd">            lgbn = LGBayesianNetwork(skel, nd)</span>
+<span class="sd">            data = lgbn.randomsample(8000)</span>
+
+<span class="sd">            # instantiate my learner </span>
+<span class="sd">            learner = PGMLearner()</span>
+
+<span class="sd">            # estimate structure</span>
+<span class="sd">            result = learner.lg_constraint_estimatestruct(data)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result.E, indent=2)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)),</span> <span class="s">&quot;Arg must be a list of dicts.&quot;</span>
+        <span class="n">cdata</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c"># establish ranges</span>
+        <span class="n">ranges</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">cdata</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">ranges</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="s">&quot;infinity&quot;</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s">&quot;infinity&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">cdata</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">sample</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">sample</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">sample</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+
+        <span class="c"># discretize cdata set</span>
+        <span class="n">bincounts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cdata</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">bincounts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bins</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">cdata</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bins</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">sample</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">i</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">bins</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ranges</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">bins</span><span class="p">)))):</span>
+                        <span class="n">sample</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> 
+                        <span class="n">bincounts</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span> 
+
+        <span class="c"># run discrete_constraint_estimatestruct</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">discrete_constraint_estimatestruct</span><span class="p">(</span><span class="n">cdata</span><span class="p">,</span> <span class="n">pvalparam</span><span class="p">,</span> <span class="n">indegree</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="PGMLearner.discrete_condind"><a class="viewcode-back" href="../../pgmlearner.html#libpgm.pgmlearner.PGMLearner.discrete_condind">[docs]</a>    <span class="k">def</span> <span class="nf">discrete_condind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">U</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Test how independent a variable *X* and a variable *Y* are in a discrete data set given by *data*, where the independence is conditioned on a set of variables given by *U*. This method works by assuming as a null hypothesis that the variables are conditionally independent on *U*, and thus that:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            P(X, Y, U) = P(U) \\cdot P(X|U) \\cdot P(Y|U) </span>
+
+<span class="sd">        It tests the deviance of the data from this null hypothesis, returning the result of a chi-square test and a p-value.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *data* -- An array of dicts containing samples from the network in {vertex: value} format. Example::</span>
+
+<span class="sd">                    [</span>
+<span class="sd">                        {</span>
+<span class="sd">                            &#39;Grade&#39;: &#39;B&#39;,</span>
+<span class="sd">                            &#39;SAT&#39;: &#39;lowscore&#39;,</span>
+<span class="sd">                            ...</span>
+<span class="sd">                        },</span>
+<span class="sd">                        ...</span>
+<span class="sd">                    ]</span>
+<span class="sd">            2. *X* -- A variable whose dependence on Y we are testing given U.</span>
+<span class="sd">            3. *Y* -- A variable whose dependence on X we are testing given U.</span>
+<span class="sd">            4. *U* -- A list of variables that are given.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            1. *chi* -- The result of the chi-squared test on the data. This is a</span>
+<span class="sd">                   measure of the deviance of the actual distribution of X and</span>
+<span class="sd">                   Y given U from the expected distribution of X and Y given U.</span>
+<span class="sd">                   Since the null hypothesis is that X and Y are independent </span>
+<span class="sd">                   given U, the expected distribution is that :math:`P(X, Y, U) =</span>
+<span class="sd">                   P(U) P(X | U) P (Y | U)`.</span>
+<span class="sd">            2. *pval* -- The p-value of the test, meaning the probability of</span>
+<span class="sd">                    attaining a chi-square result as extreme as or more extreme</span>
+<span class="sd">                    than the one found, assuming that the null hypothesis is</span>
+<span class="sd">                    true. (e.g., a p-value of .05 means that if X and Y were </span>
+<span class="sd">                    independent given U, the chance of getting a chi-squared</span>
+<span class="sd">                    result this high or higher are .05)</span>
+<span class="sd">            3. *U* -- The &#39;witness&#39; of X and Y&#39;s independence. This is the variable</span>
+<span class="sd">                 that, when it is known, leaves X and Y independent.</span>
+
+<span class="sd">        For more information see Koller et al. 790.</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c"># find possible outcomes and store</span>
+        <span class="n">_outcomes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">_outcomes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_outcomes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">_outcomes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+        <span class="c"># store number of outcomes for X, Y, and U</span>
+        <span class="n">Xnumoutcomes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_outcomes</span><span class="p">[</span><span class="n">X</span><span class="p">])</span>
+        <span class="n">Ynumoutcomes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_outcomes</span><span class="p">[</span><span class="n">Y</span><span class="p">])</span>
+        <span class="n">Unumoutcomes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">U</span><span class="p">:</span>
+            <span class="n">Unumoutcomes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_outcomes</span><span class="p">[</span><span class="n">val</span><span class="p">]))</span>
+
+        <span class="c"># calculate P(U) -- the distribution of U</span>
+        <span class="n">PU</span> <span class="o">=</span> <span class="mi">1</span>
+        
+        <span class="c"># define helper function to add a dimension to an array recursively</span>
+        <span class="k">def</span> <span class="nf">add_dimension_to_array</span><span class="p">(</span><span class="n">mdarray</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mdarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mdarray</span><span class="p">)):</span>
+                    <span class="n">mdarray</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">add_dimension_to_array</span><span class="p">(</span><span class="n">mdarray</span><span class="p">[</span><span class="n">h</span><span class="p">],</span> <span class="n">size</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">mdarray</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mdarray</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)]</span>
+                <span class="k">return</span> <span class="n">mdarray</span>
+
+        <span class="c"># make PU the right size</span>
+        <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">Unumoutcomes</span><span class="p">:</span>
+            <span class="n">PU</span> <span class="o">=</span> <span class="n">add_dimension_to_array</span><span class="p">(</span><span class="n">PU</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+
+        <span class="c"># fill with data</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">PU</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">Uindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="n">x</span><span class="p">]])</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">Uindex</span><span class="p">]</span>
+                <span class="n">lastindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+                <span class="n">tmp</span><span class="p">[</span><span class="n">lastindex</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># calculate P(X, U) -- the distribution of X and U</span>
+        <span class="n">PXandU</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Xnumoutcomes</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">Unumoutcomes</span><span class="p">:</span>
+            <span class="n">PXandU</span> <span class="o">=</span> <span class="n">add_dimension_to_array</span><span class="p">(</span><span class="n">PXandU</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">Xindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">X</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">X</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> 
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">PXandU</span><span class="p">[</span><span class="n">Xindex</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">Uindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="n">x</span><span class="p">]])</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">Uindex</span><span class="p">]</span>
+                <span class="n">lastindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+                <span class="n">tmp</span><span class="p">[</span><span class="n">lastindex</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">PXandU</span><span class="p">[</span><span class="n">Xindex</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># calculate P(Y, U) -- the distribution of Y and U</span>
+        <span class="n">PYandU</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Ynumoutcomes</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">Unumoutcomes</span><span class="p">:</span>
+            <span class="n">PYandU</span> <span class="o">=</span> <span class="n">add_dimension_to_array</span><span class="p">(</span><span class="n">PYandU</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">Yindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">Y</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">Y</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> 
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">PYandU</span><span class="p">[</span><span class="n">Yindex</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">Uindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="n">x</span><span class="p">]])</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">Uindex</span><span class="p">]</span>
+                <span class="n">lastindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+                <span class="n">tmp</span><span class="p">[</span><span class="n">lastindex</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">PYandU</span><span class="p">[</span><span class="n">Yindex</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># assemble P(U)P(X|U)P(Y|U) -- the expected distribution if X and Y are</span>
+        <span class="c"># independent given U.</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="p">[[</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Ynumoutcomes</span><span class="p">)]</span> <span class="k">for</span> <span class="n">__</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Xnumoutcomes</span><span class="p">)]</span> 
+
+        <span class="c"># define helper function to multiply the entries of two matrices</span>
+        <span class="k">def</span> <span class="nf">multiply_entries</span><span class="p">(</span><span class="n">matrixa</span><span class="p">,</span> <span class="n">matrixb</span><span class="p">):</span>
+            <span class="n">matrix1</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">matrixa</span><span class="p">)</span>
+            <span class="n">matrix2</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">matrixb</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">matrix1</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">matrix1</span><span class="p">)):</span>
+                    <span class="n">matrix1</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">multiply_entries</span><span class="p">(</span><span class="n">matrix1</span><span class="p">[</span><span class="n">h</span><span class="p">],</span> <span class="n">matrix2</span><span class="p">[</span><span class="n">h</span><span class="p">])</span>
+                <span class="k">return</span> <span class="n">matrix1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">matrix1</span> <span class="o">*</span> <span class="n">matrix2</span><span class="p">)</span>
+
+        <span class="c"># define helper function to divide the entries of two matrices</span>
+        <span class="k">def</span> <span class="nf">divide_entries</span><span class="p">(</span><span class="n">matrixa</span><span class="p">,</span> <span class="n">matrixb</span><span class="p">):</span>
+            <span class="n">matrix1</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">matrixa</span><span class="p">)</span>
+            <span class="n">matrix2</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">matrixb</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">matrix1</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">matrix1</span><span class="p">)):</span>
+                    <span class="n">matrix1</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">divide_entries</span><span class="p">(</span><span class="n">matrix1</span><span class="p">[</span><span class="n">h</span><span class="p">],</span> <span class="n">matrix2</span><span class="p">[</span><span class="n">h</span><span class="p">])</span>
+                <span class="k">return</span> <span class="n">matrix1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">matrix1</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">matrix2</span><span class="p">))</span>
+
+        <span class="c"># combine known graphs to calculate P(U)P(X|U)P(Y|U)</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Xnumoutcomes</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Ynumoutcomes</span><span class="p">):</span>
+                <span class="n">product</span> <span class="o">=</span> <span class="n">multiply_entries</span><span class="p">(</span><span class="n">PXandU</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="n">PYandU</span><span class="p">[</span><span class="n">y</span><span class="p">])</span>
+                <span class="n">final</span> <span class="o">=</span> <span class="n">divide_entries</span><span class="p">(</span><span class="n">product</span><span class="p">,</span> <span class="n">PU</span><span class="p">)</span>
+                <span class="n">expected</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">final</span>
+
+        <span class="c"># find P(XYU) -- the actual distribution of X, Y, and U -- in sample</span>
+        <span class="n">PXYU</span> <span class="o">=</span> <span class="p">[[</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Ynumoutcomes</span><span class="p">)]</span> <span class="k">for</span> <span class="n">__</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Xnumoutcomes</span><span class="p">)]</span> 
+        <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">Unumoutcomes</span><span class="p">:</span>
+            <span class="n">PXYU</span> <span class="o">=</span> <span class="n">add_dimension_to_array</span><span class="p">(</span><span class="n">PXYU</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">Xindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">X</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">X</span><span class="p">])</span>
+            <span class="n">Yindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">Y</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">Y</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">PXYU</span><span class="p">[</span><span class="n">Xindex</span><span class="p">][</span><span class="n">Yindex</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">Uindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="n">x</span><span class="p">]])</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="n">Uindex</span><span class="p">]</span>
+                <span class="n">lastindex</span> <span class="o">=</span> <span class="n">_outcomes</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="n">U</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+                <span class="n">tmp</span><span class="p">[</span><span class="n">lastindex</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">PXYU</span><span class="p">[</span><span class="n">Xindex</span><span class="p">][</span><span class="n">Yindex</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span> 
+
+        <span class="c"># use scipy&#39;s chisquare to determine the deviance of the evidence</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">expected</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">PXYU</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="c"># delete entries with value 0 (they mess up the chisquare function)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">size</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">a</span><span class="o">.</span><span class="n">itemset</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="c"># run chi-squared</span>
+        <span class="n">chi</span><span class="p">,</span> <span class="n">pv</span> <span class="o">=</span> <span class="n">chisquare</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+        <span class="c"># return chi-squared result, p-value for that result, and witness</span>
+        <span class="k">return</span> <span class="n">chi</span><span class="p">,</span> <span class="n">pv</span><span class="p">,</span> <span class="n">U</span>
+</div>
+<div class="viewcode-block" id="PGMLearner.discrete_estimatebn"><a class="viewcode-back" href="../../pgmlearner.html#libpgm.pgmlearner.PGMLearner.discrete_estimatebn">[docs]</a>    <span class="k">def</span> <span class="nf">discrete_estimatebn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">pvalparam</span><span class="o">=.</span><span class="mo">05</span><span class="p">,</span> <span class="n">indegree</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Fully learn a Bayesian network from discrete data given by *data*. This function combines the *discrete_constraint_estimatestruct* method (where it passes in the *pvalparam* and *indegree* arguments) with the *discrete_mle_estimateparams* method. It returns a complete :doc:`DiscreteBayesianNetwork &lt;discretebayesiannetwork&gt;` class instance learned from the data.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *data* -- An array of dicts containing samples from the network in {vertex: value} format. Example::</span>
+
+<span class="sd">                    [</span>
+<span class="sd">                        {</span>
+<span class="sd">                            &#39;Grade&#39;: &#39;B&#39;,</span>
+<span class="sd">                            &#39;SAT&#39;: &#39;lowscore&#39;,</span>
+<span class="sd">                            ...</span>
+<span class="sd">                        },</span>
+<span class="sd">                        ...</span>
+<span class="sd">                    ]</span>
+<span class="sd">            2. *pvalparam* -- The p-value below which to consider something significantly unlikely. A common number used is 0.05</span>
+<span class="sd">            3. *indegree* -- The upper bound on the size of a witness set (see Koller et al. 85). If this is larger than 1, a huge amount of trials are required to avoid a divide-by- zero error.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)),</span> <span class="s">&quot;Arg must be a list of dicts.&quot;</span>
+
+        <span class="c"># learn graph skeleton</span>
+        <span class="n">skel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discrete_constraint_estimatestruct</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pvalparam</span><span class="o">=</span><span class="n">pvalparam</span><span class="p">,</span> <span class="n">indegree</span><span class="o">=</span><span class="n">indegree</span><span class="p">)</span>
+
+        <span class="c"># learn parameters</span>
+        <span class="n">bn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">discrete_mle_estimateparams</span><span class="p">(</span><span class="n">skel</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="c"># return</span>
+        <span class="k">return</span> <span class="n">bn</span>
+</div>
+<div class="viewcode-block" id="PGMLearner.lg_estimatebn"><a class="viewcode-back" href="../../pgmlearner.html#libpgm.pgmlearner.PGMLearner.lg_estimatebn">[docs]</a>    <span class="k">def</span> <span class="nf">lg_estimatebn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">pvalparam</span><span class="o">=.</span><span class="mo">05</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">indegree</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Fully learn a Bayesian network from linear Gaussian data given by *data*. This function combines the *lg_constraint_estimatestruct* method (where it passes in the *pvalparam*, *bins*, and *indegree* arguments) with the *lg_mle_estimateparams* method. It returns a complete :doc:`LGBayesianNetwork &lt;discretebayesiannetwork&gt;` class instance learned from the data.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *data* -- An array of dicts containing samples from the network in {vertex: value} format. Example::</span>
+
+<span class="sd">                    [</span>
+<span class="sd">                        {</span>
+<span class="sd">                            &#39;Grade&#39;: 75.23423,</span>
+<span class="sd">                            &#39;SAT&#39;: 873.42342,</span>
+<span class="sd">                            ...</span>
+<span class="sd">                        },</span>
+<span class="sd">                        ...</span>
+<span class="sd">                    ]</span>
+<span class="sd">            2. *pvalparam* -- The p-value below which to consider something significantly unlikely. A common number used is 0.05</span>
+<span class="sd">            3. *indegree* -- The upper bound on the size of a witness set (see Koller et al. 85). If this is larger than 1, a huge amount of trials are required to avoid a divide-by- zero error.</span>
+
+<span class="sd">        Usage example: this would learn entire Bayesian networks from sets of 8000 data points::</span>
+
+<span class="sd">            import json</span>
+
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.lgbayesiannetwork import LGBayesianNetwork</span>
+<span class="sd">            from libpgm.discretebayesiannetwork import DiscreteBayesianNetwork</span>
+<span class="sd">            from libpgm.pgmlearner import PGMLearner</span>
+
+<span class="sd">            # LINEAR GAUSSIAN</span>
+<span class="sd">            </span>
+<span class="sd">            # generate some data to use</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestlgdict.txt&quot;)    # an input file</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.toporder()</span>
+<span class="sd">            lgbn = LGBayesianNetwork(skel, nd)</span>
+<span class="sd">            data = lgbn.randomsample(8000)</span>
+
+<span class="sd">            # instantiate my learner </span>
+<span class="sd">            learner = PGMLearner()</span>
+
+<span class="sd">            # learn bayesian network</span>
+<span class="sd">            result = learner.lg_estimatebn(data)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result.E, indent=2)</span>
+<span class="sd">            print json.dumps(result.Vdata, indent=2)</span>
+
+<span class="sd">            # DISCRETE</span>
+
+<span class="sd">            # generate some data to use</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestdict.txt&quot;)    # an input file</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.toporder()</span>
+<span class="sd">            bn = DiscreteBayesianNetwork(skel, nd)</span>
+<span class="sd">            data = bn.randomsample(8000)</span>
+
+<span class="sd">            # instantiate my learner </span>
+<span class="sd">            learner = PGMLearner()</span>
+
+<span class="sd">            # learn bayesian network</span>
+<span class="sd">            result = learner.discrete_estimatebn(data)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result.E, indent=2)</span>
+<span class="sd">            print json.dumps(result.Vdata, indent=2)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)),</span> <span class="s">&quot;Arg must be a list of dicts.&quot;</span>
+
+        <span class="c"># learn graph skeleton</span>
+        <span class="n">skel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lg_constraint_estimatestruct</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pvalparam</span><span class="o">=</span><span class="n">pvalparam</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">indegree</span><span class="o">=</span><span class="n">indegree</span><span class="p">)</span>
+
+        <span class="c"># learn parameters</span>
+        <span class="n">bn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lg_mle_estimateparams</span><span class="p">(</span><span class="n">skel</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="c"># return</span>
+        <span class="k">return</span> <span class="n">bn</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

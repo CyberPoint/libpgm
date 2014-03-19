@@ -1,0 +1,16 @@
+Discrete BN learning. Runtime as a function of numvertices. Numoutcomes=2 Indegree=2. Data points=150. Max witness size=1.
+5, 0.010000
+10, 0.070000
+15, 0.200000
+20, 0.410000
+25, 0.710000
+30, 1.140000
+35, 1.710000
+40, 2.440000
+45, 3.400000
+50, 4.560000
+55, 5.910000
+60, 7.520000
+65, 9.670000
+70, 11.590000
+75, 14.000000

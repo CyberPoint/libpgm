@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>libpgm.tablecpdfactorization &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for libpgm.tablecpdfactorization</h1><div class="highlight"><pre>
+<span class="c"># Copyright (c) 2012, CyberPoint International, LLC</span>
+<span class="c"># All rights reserved.</span>
+<span class="c"># </span>
+<span class="c"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer.</span>
+<span class="c">#     * Redistributions in binary form must reproduce the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer in the</span>
+<span class="c">#       documentation and/or other materials provided with the distribution.</span>
+<span class="c">#     * Neither the name of the CyberPoint International, LLC nor the</span>
+<span class="c">#       names of its contributors may be used to endorse or promote products</span>
+<span class="c">#       derived from this software without specific prior written permission.</span>
+<span class="c"># </span>
+<span class="c"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="c"># ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="c"># WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c"># DISCLAIMED. IN NO EVENT SHALL CYBERPOINT INTERNATIONAL, LLC BE LIABLE FOR ANY</span>
+<span class="c"># DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="c"># (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="c"># LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND</span>
+<span class="c"># ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="c"># SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module provides tools for creating and using factorized representations of Bayesian networks. Factorized representations of Bayesian networks are discrete CPDs whose values have been flattened into a single array, while the cardinalities and strides of each variable represented are kept track of separately. With the proper setup, these flattened structures can be more easily multiplied together, reduced, and operated on. For more information on factors cf. Koller et al. Ch. 4.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span> <span class="nn">tablecpdfactor</span> <span class="kn">import</span> <span class="n">TableCPDFactor</span>
+<span class="kn">from</span> <span class="nn">discretebayesiannetwork</span> <span class="kn">import</span> <span class="n">DiscreteBayesianNetwork</span>
+
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<div class="viewcode-block" id="TableCPDFactorization"><a class="viewcode-back" href="../../tablecpdfactorization.html#libpgm.tablecpdfactorization.TableCPDFactorization">[docs]</a><span class="k">class</span> <span class="nc">TableCPDFactorization</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This class represents a factorized Bayesian network with discrete CPD tables. It contains the attributes *bn*, *originalfactorlist*, and *factorlist*, and the methods *refresh*, *sumproductve*, *sumproducteliminatevar*, *condprobve*, *specificquery*, and *gibbssample*.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bn</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This class is constructed with a :doc:`DiscreteBayesianNetwork &lt;discretebayesiannetwork&gt;` instance as argument. First, it takes the input itself and stores it in the *bn* attribute. Then, it transforms the information of each of these nodes from standard discrete CPD form into a :doc:`TableCPDFactor &lt;tablecpdfactor&gt;` isntance and stores the instances in an array in the attribute *originalfactorlist*. Finally, it makes a copy of this list to work with and stores it in *factorlist*.</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bn</span><span class="p">,</span> <span class="n">DiscreteBayesianNetwork</span><span class="p">),</span> <span class="s">&quot;Input must be a DiscreteBayesianNetwork instance.&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">bn</span> <span class="o">=</span> <span class="n">bn</span>
+        <span class="sd">&#39;&#39;&#39;The Bayesian network used as argument at instantiation.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">originalfactorlist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="sd">&#39;&#39;&#39;A list of :doc:`TableCPDFactor &lt;tablecpdfactor&gt;` instances, one per node.&#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">:</span>
+            <span class="n">factor</span> <span class="o">=</span> <span class="n">TableCPDFactor</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">bn</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">originalfactorlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">originalfactorlist</span><span class="p">)</span>  
+        <span class="sd">&#39;&#39;&#39;A working copy of *originalfactorlist*.&#39;&#39;&#39;</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">,</span> <span class="s">&quot;Factor list not properly loaded, check for an incomplete class instance as input.&quot;</span>
+    
+<div class="viewcode-block" id="TableCPDFactorization.refresh"><a class="viewcode-back" href="../../tablecpdfactorization.html#libpgm.tablecpdfactorization.TableCPDFactorization.refresh">[docs]</a>    <span class="k">def</span> <span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Refresh the *factorlist* attribute to equate with *originalfactorlist*. This is in effect a reset of the system, erasing any changes to *factorlist* that the program has executed.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">originalfactorlist</span><span class="p">)</span>    
+            </div>
+<div class="viewcode-block" id="TableCPDFactorization.sumproducteliminatevar"><a class="viewcode-back" href="../../tablecpdfactorization.html#libpgm.tablecpdfactorization.TableCPDFactorization.sumproducteliminatevar">[docs]</a>    <span class="k">def</span> <span class="nf">sumproducteliminatevar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vertex</span><span class="p">):</span>    
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Multiply the all the factors in *factorlist* that have *vertex* in their scope, then sum out *vertex* from the resulting product factor. Replace all factors that were multiplied together with the resulting summed-out product.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *vertex* - The name of the variable to eliminate.</span>
+<span class="sd">        </span>
+<span class="sd">        Attributes modified:</span>
+<span class="sd">            1. *factorlist* -- Modified to reflect the eliminated variable.</span>
+<span class="sd">        </span>
+<span class="sd">        For more information on this algorithm cf. Koller et al. 298</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">factors2</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">factors1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">factor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">factor</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+                <span class="n">factors1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">factors2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+                
+        <span class="c"># multiply factors1 array together</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">factors1</span><span class="p">)):</span>
+            <span class="n">factors1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">multiplyfactor</span><span class="p">(</span><span class="n">factors1</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        
+        <span class="c"># sum out the vertex from the factor</span>
+        <span class="n">factors1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sumout</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+        
+        <span class="c"># add to rest of factors and return</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">factors1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="n">factors2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">factors1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span> <span class="o">=</span> <span class="n">factors2</span>
+    </div>
+<div class="viewcode-block" id="TableCPDFactorization.sumproductve"><a class="viewcode-back" href="../../tablecpdfactorization.html#libpgm.tablecpdfactorization.TableCPDFactorization.sumproductve">[docs]</a>    <span class="k">def</span> <span class="nf">sumproductve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vertices</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Eliminate each vertex in *vertices* from *factorlist* using *sumproducteliminatevar*.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *vertices* -- A list of UUIDs of vertices to be eliminated.</span>
+<span class="sd">        </span>
+<span class="sd">        Attributes modified: </span>
+<span class="sd">            1. *factorlist* -- modified to become a single factor representing the remaining variables.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+    
+        <span class="c"># eliminate one by one</span>
+        <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="n">vertices</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sumproducteliminatevar</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+        
+        <span class="c"># multiply together if many factors remain </span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">multiplyfactor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="TableCPDFactorization.condprobve"><a class="viewcode-back" href="../../tablecpdfactorization.html#libpgm.tablecpdfactorization.TableCPDFactorization.condprobve">[docs]</a>    <span class="k">def</span> <span class="nf">condprobve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">evidence</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Eliminate all variables in *factorlist* except for the ones queried. Adjust all distributions for the evidence given. Return the probability distribution over a set of variables given by the keys of *query* given *evidence*. </span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *query* -- A dict containing (key: value) pairs reflecting (variable: value) that represents what outcome to calculate the probability of. </span>
+<span class="sd">            2. *evidence* -- A dict containing (key: value) pairs reflecting (variable: value) that represents what is known about the system.</span>
+<span class="sd">                    </span>
+<span class="sd">        Attributes modified:</span>
+<span class="sd">            1. *factorlist* -- Modified to be one factor representing the probability distribution of the query variables given the evidence.</span>
+<span class="sd">                           </span>
+<span class="sd">        The function returns *factorlist* after it has been modified as above.</span>
+<span class="sd">        </span>
+<span class="sd">        Usage example: this code would return the distribution over a queried node, given evidence::</span>
+
+<span class="sd">            import json</span>
+
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.discretebayesiannetwork import DiscreteBayesianNetwork</span>
+<span class="sd">            from libpgm.tablecpdfactorization import TableCPDFactorization</span>
+
+<span class="sd">            # load nodedata and graphskeleton</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+
+<span class="sd">            # toporder graph skeleton</span>
+<span class="sd">            skel.toporder()</span>
+
+<span class="sd">            # load evidence</span>
+<span class="sd">            evidence = dict(Letter=&#39;weak&#39;)</span>
+<span class="sd">            query = dict(Grade=&#39;A&#39;)</span>
+
+<span class="sd">            # load bayesian network</span>
+<span class="sd">            bn = DiscreteBayesianNetwork(skel, nd)</span>
+
+<span class="sd">            # load factorization</span>
+<span class="sd">            fn = TableCPDFactorization(bn)</span>
+
+<span class="sd">            # calculate probability distribution</span>
+<span class="sd">            result = fn.condprobve(query, evidence)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result.vals, indent=2)</span>
+<span class="sd">            print json.dumps(result.scope, indent=2)</span>
+<span class="sd">            print json.dumps(result.card, indent=2)</span>
+<span class="sd">            print json.dumps(result.stride, indent=2)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evidence</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)),</span> <span class="s">&quot;First and second args must be dicts.&quot;</span>
+
+        <span class="n">eliminate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">eliminate</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">evidence</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">eliminate</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        
+        <span class="c"># modify factors to account for E = e</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">evidence</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">reducefactor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">evidence</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">))):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">scope</span> <span class="o">==</span> <span class="p">[]):</span>
+                    <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+                    
+        <span class="c"># eliminate all necessary variables in the new factor set to produce result</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sumproductve</span><span class="p">(</span><span class="n">eliminate</span><span class="p">)</span>
+        
+        <span class="c"># normalize result</span>
+        <span class="n">summ</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">lngth</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="o">.</span><span class="n">vals</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">lngth</span><span class="p">):</span>
+            <span class="n">summ</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">lngth</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">/=</span> <span class="n">summ</span>
+            
+        <span class="c"># return table</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span>
+</div>
+<div class="viewcode-block" id="TableCPDFactorization.specificquery"><a class="viewcode-back" href="../../tablecpdfactorization.html#libpgm.tablecpdfactorization.TableCPDFactorization.specificquery">[docs]</a>    <span class="k">def</span> <span class="nf">specificquery</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">evidence</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Eliminate all variables except for the ones specified by *query*. Adjust all distributions to reflect *evidence*. Return the entry that matches the exact probability of a specific event, as specified by *query*.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *query* -- A dict containing (key: value) pairs reflecting (variable: value) that represents what outcome to calculate the probability of. </span>
+<span class="sd">            2. *evidence* -- A dict containing (key: value) pairs reflecting (variable: value) evidence that is known about the system.</span>
+<span class="sd">                    </span>
+<span class="sd">        Attributes modified:</span>
+<span class="sd">            1. *factorlist* -- Modified as in *condprobve*.</span>
+<span class="sd">                           </span>
+<span class="sd">        The function then chooses the entries of *factorlist* that match the queried event or events. It then operates on them to return the probability that the event (or events) specified will occur, represented as a float between 0 and 1.</span>
+
+<span class="sd">        Note that in this function, queries of the type P((x=A or x=B) and (y=C or y=D)) are permitted. They are executed by formatting the *query* dictionary like so::</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;x&quot;: [&quot;A&quot;, &quot;B&quot;],</span>
+<span class="sd">                &quot;y&quot;: [&quot;C&quot;, &quot;D&quot;]</span>
+<span class="sd">            }</span>
+<span class="sd">        </span>
+<span class="sd">        Usage example: this code would answer the specific query that vertex ``Grade`` gets outcome ``A`` given that ``Letter`` has outcome ``weak``, in :doc:`this Bayesian network &lt;unittestdict&gt;`::</span>
+
+<span class="sd">            import json</span>
+
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.discretebayesiannetwork import DiscreteBayesianNetwork</span>
+<span class="sd">            from libpgm.tablecpdfactorization import TableCPDFactorization</span>
+<span class="sd">            </span>
+<span class="sd">            # load nodedata and graphskeleton</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+
+<span class="sd">            # toporder graph skeleton</span>
+<span class="sd">            skel.toporder()</span>
+
+<span class="sd">            # load evidence</span>
+<span class="sd">            evidence = dict(Letter=&#39;weak&#39;)</span>
+<span class="sd">            query = dict(Grade=&#39;A&#39;)</span>
+
+<span class="sd">            # load bayesian network</span>
+<span class="sd">            bn = DiscreteBayesianNetwork(skel, nd)</span>
+
+<span class="sd">            # load factorization</span>
+<span class="sd">            fn = TableCPDFactorization(bn)</span>
+
+<span class="sd">            # calculate probability distribution</span>
+<span class="sd">            result = fn.specificquery(query, evidence)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print result</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evidence</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)),</span> <span class="s">&quot;First and second args must be dicts.&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">condprobve</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">evidence</span><span class="p">)</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">rindices</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">findices</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c"># find corresponding numbers to possible values, store in rindices</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">rindices</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">visited</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">for</span> <span class="n">poss</span> <span class="ow">in</span> <span class="n">query</span><span class="p">[</span><span class="n">var</span><span class="p">]:</span>
+                <span class="n">rindices</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="s">&quot;vals&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">poss</span><span class="p">))</span>
+        
+        <span class="c"># define function to help iterate recursively through all combinations of evidence</span>
+        <span class="k">def</span> <span class="nf">findentry</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+            <span class="n">visited</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span> 
+        
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rindices</span><span class="p">[</span><span class="n">var</span><span class="p">])):</span>
+                <span class="n">newindex</span> <span class="o">=</span> <span class="n">index</span> <span class="o">+</span> <span class="n">rindices</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">visited</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">i</span> <span class="o">=</span> <span class="n">visited</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+                    <span class="n">nextvar</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">findentry</span><span class="p">(</span><span class="n">nextvar</span><span class="p">,</span> <span class="n">newindex</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">findices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newindex</span><span class="p">)</span>
+            <span class="n">visited</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">return</span>
+        
+        <span class="c"># calculate all relevant entries</span>
+        <span class="n">findentry</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+            
+        <span class="c"># sum entries</span>
+        <span class="n">fanswer</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">findex</span> <span class="ow">in</span> <span class="n">findices</span><span class="p">:</span>
+            <span class="n">fanswer</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">findex</span><span class="p">]</span>
+            
+        <span class="c"># return result</span>
+        <span class="k">return</span> <span class="n">fanswer</span>
+</div>
+<div class="viewcode-block" id="TableCPDFactorization.gibbssample"><a class="viewcode-back" href="../../tablecpdfactorization.html#libpgm.tablecpdfactorization.TableCPDFactorization.gibbssample">[docs]</a>    <span class="k">def</span> <span class="nf">gibbssample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evidence</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a sequence of *n* samples using the Gibbs sampling method, given evidence specified by *evidence*. Gibbs sampling is a technique wherein for each sample, each variable in turn is erased and calculated conditioned on the outcomes of its neighbors. This method starts by sampling from the &#39;prior distribution,&#39; which is the distribution not conditioned on evidence, but the samples provably get closer and closer to the posterior distribution, which is the distribution conditioned on the evidence. It is thus a good way to deal with evidence when generating random samples.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments: </span>
+<span class="sd">            1. *evidence* -- A dict containing (key: value) pairs reflecting (variable: value) that represents what is known about the system.</span>
+<span class="sd">            2. *n* -- The number of samples to return.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">        </span>
+<span class="sd">        A list of *n* random samples, each element of which is a dict containing (vertex: value) pairs.</span>
+<span class="sd">        </span>
+<span class="sd">        For more information, cf. Koller et al. Ch. 12.3.1</span>
+
+<span class="sd">        Usage example: This code would generate a sequence of 10 samples::</span>
+
+<span class="sd">            import json</span>
+<span class="sd">            </span>
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.discretebayesiannetwork import DiscreteBayesianNetwork</span>
+<span class="sd">            from libpgm.tablecpdfactorization import TableCPDFactorization</span>
+<span class="sd">            </span>
+<span class="sd">            # load nodedata and graphskeleton</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            nd.load(&quot;../tests/unittestdict.txt&quot;)</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+
+<span class="sd">            # toporder graph skeleton</span>
+<span class="sd">            skel.toporder()</span>
+
+<span class="sd">            # load evidence</span>
+<span class="sd">            evidence = dict(Letter=&#39;weak&#39;)</span>
+
+<span class="sd">            # load bayesian network</span>
+<span class="sd">            bn = DiscreteBayesianNetwork(skel, nd)</span>
+
+<span class="sd">            # load factorization</span>
+<span class="sd">            fn = TableCPDFactorization(bn)</span>
+
+<span class="sd">            # sample </span>
+<span class="sd">            result = fn.gibbssample(evidence, 10)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result, indent=2)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">()</span> 
+        
+        <span class="c"># declare result array</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c"># create initial instantiation </span>
+        <span class="n">initial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="o">.</span><span class="n">randomsample</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">evidence</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">initial</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">evidence</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">initial</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  
+        
+        <span class="c"># find nodes that we are sampling</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="o">.</span><span class="n">V</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">vertex</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">evidence</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+
+        <span class="c"># reduce factorlist given E = e</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">evidence</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">reducefactor</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">evidence</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">))):</span>    
+                <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">scope</span> <span class="o">==</span> <span class="p">[]):</span>
+                    <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+                    
+        <span class="c"># define function to create the next instantiation</span>
+        <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="n">current</span><span class="p">):</span> 
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+                <span class="c"># multiply all relevant factors together</span>
+                <span class="n">relevantfactors</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">factor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">factorlist</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">factor</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">factorcopy</span> <span class="o">=</span> <span class="n">factor</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                        <span class="n">relevantfactors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">factorcopy</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">relevantfactors</span><span class="p">)):</span>
+                    <span class="n">relevantfactors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">multiplyfactor</span><span class="p">(</span><span class="n">relevantfactors</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+
+                <span class="c"># reduce to leave only the one node</span>
+                <span class="k">for</span> <span class="n">othernode</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">othernode</span> <span class="o">!=</span> <span class="n">node</span> <span class="ow">and</span> <span class="n">relevantfactors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">othernode</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">relevantfactors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reducefactor</span><span class="p">(</span><span class="n">othernode</span><span class="p">,</span> <span class="n">current</span><span class="p">[</span><span class="n">othernode</span><span class="p">])</span>
+                
+                <span class="c"># renormalize</span>
+                <span class="n">summ</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">relevantfactors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vals</span><span class="p">:</span>
+                    <span class="n">summ</span> <span class="o">+=</span> <span class="n">val</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">relevantfactors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vals</span><span class="p">)):</span>
+                    <span class="n">relevantfactors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">/=</span> <span class="n">summ</span>
+                
+                <span class="c"># convert random number</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+                <span class="n">lboundary</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">uboundary</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">relevantfactors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vals</span><span class="p">)):</span>
+                    <span class="n">uboundary</span> <span class="o">+=</span> <span class="n">relevantfactors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">lboundary</span> <span class="o">&lt;=</span> <span class="n">val</span> <span class="ow">and</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="n">uboundary</span><span class="p">):</span>
+                        <span class="n">rindex</span> <span class="o">=</span> <span class="n">x</span>
+                        <span class="c"># print s, val</span>
+                        <span class="k">break</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">lboundary</span> <span class="o">=</span> <span class="n">uboundary</span> 
+                
+                <span class="c"># modify result</span>
+                <span class="n">current</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="s">&quot;vals&quot;</span><span class="p">][</span><span class="n">rindex</span><span class="p">]</span>
+   
+            <span class="k">return</span> <span class="n">current</span>
+                        
+        <span class="c"># run next() function n times</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">copy</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span> 
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">[</span><span class="n">u</span><span class="p">]:</span>
+                <span class="n">copy</span><span class="p">[</span><span class="n">entry</span><span class="p">]</span> <span class="o">=</span> <span class="n">seq</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">entry</span><span class="p">]</span>
+            <span class="n">seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">copy</span><span class="p">))</span>
+            
+        <span class="c"># return all samples</span>
+        <span class="k">return</span> <span class="n">seq</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

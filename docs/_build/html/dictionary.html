@@ -1,0 +1,152 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dictionary &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="graphskeleton" href="graphskeleton.html" />
+    <link rel="prev" title="Welcome to libpgm!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="graphskeleton.html" title="graphskeleton"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to libpgm!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-libpgm.dictionary">
+<span id="dictionary"></span><h1>dictionary<a class="headerlink" href="#module-libpgm.dictionary" title="Permalink to this headline">¶</a></h1>
+<p>Nearly all of the functions of this library require key indexing, which means it deals with dictionaries internally. This module deals with loading dictionaries and handles automatically converting from python-style dictionaries to condensed (no excess white space) JSON-style dictionaries.</p>
+<dl class="class">
+<dt id="libpgm.dictionary.Dictionary">
+<em class="property">class </em><tt class="descclassname">libpgm.dictionary.</tt><tt class="descname">Dictionary</tt><a class="reference internal" href="_modules/libpgm/dictionary.html#Dictionary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.dictionary.Dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents a JSON-style, key-indexable dictionary of data. It contains the attribute <em>alldata</em> and the method <em>dictload</em>.</p>
+<dl class="attribute">
+<dt id="libpgm.dictionary.Dictionary.alldata">
+<tt class="descname">alldata</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.dictionary.Dictionary.alldata" title="Permalink to this definition">¶</a></dt>
+<dd><p>An internal representation of a key-indexable dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.dictionary.Dictionary.dictload">
+<tt class="descname">dictload</tt><big>(</big><em>path</em><big>)</big><a class="reference internal" href="_modules/libpgm/dictionary.html#Dictionary.dictload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.dictionary.Dictionary.dictload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a dictionary from a JSON-like text in a text file located at <em>path</em> into the attribute <em>alldata</em>.</p>
+<p>In order for this function to execute successfully, the text file must have the proper formatting, particularly with regard to quotation marks. See <a class="reference internal" href="unittestdict.html"><em>discrete bayesian network</em></a> for an example. Specifically, the function can get rid of excess whitespace, convert <tt class="docutils literal"><span class="pre">.x</span></tt> to <tt class="docutils literal"><span class="pre">0.x</span></tt> in decimals, and convert <tt class="docutils literal"><span class="pre">None</span></tt> to <tt class="docutils literal"><span class="pre">null</span></tt>, but nothing else.</p>
+<p>Arguments:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><em>path</em> &#8211; Path to the text file (e.g. &#8220;mydictionary.txt&#8221;)</li>
+</ol>
+</div></blockquote>
+<p>Attributes modified:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><em>alldata</em> &#8211; The entire loaded dictionary.</li>
+</ol>
+</div></blockquote>
+<p>The function also returns an error if nothing was loaded into <em>alldata</em>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to libpgm!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="graphskeleton.html"
+                        title="next chapter">graphskeleton</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/dictionary.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="graphskeleton.html" title="graphskeleton"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to libpgm!"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

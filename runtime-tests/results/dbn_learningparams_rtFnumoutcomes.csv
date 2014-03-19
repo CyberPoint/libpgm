@@ -1,0 +1,6 @@
+Discrete bn parameter learning. Runtime as a function of numoutcomes. numvertices=300. datapoints=1500. indegree=2. max witness size=1.
+1, 1.060000
+2, 1.130000
+3, 1.210000
+4, 1.270000
+5, 1.480000

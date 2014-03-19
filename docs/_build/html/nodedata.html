@@ -1,0 +1,205 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>nodedata &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="discretebayesiannetwork" href="discretebayesiannetwork.html" />
+    <link rel="prev" title="orderedskeleton" href="orderedskeleton.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="discretebayesiannetwork.html" title="discretebayesiannetwork"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="orderedskeleton.html" title="orderedskeleton"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-libpgm.nodedata">
+<span id="nodedata"></span><h1>nodedata<a class="headerlink" href="#module-libpgm.nodedata" title="Permalink to this headline">¶</a></h1>
+<p>A module for creating and managing node data. Node data in this library can have many types, dependent on whether the conditional probability distributions are discrete, linear Gaussian, or hybrid, and on whether the Bayesian network is static or dynamic. For example input files, see <a class="reference internal" href="unittestdict.html"><em>discrete bayesian network</em></a>, <a class="reference internal" href="unittesthdict.html"><em>hybrid bayesian network</em></a>, <a class="reference internal" href="unittestlgdict.html"><em>linear gaussian bayesian network</em></a>, and <a class="reference internal" href="unittestdyndict.html"><em>dynamic discrete bayesian network</em></a>.</p>
+<dl class="class">
+<dt id="libpgm.nodedata.NodeData">
+<em class="property">class </em><tt class="descclassname">libpgm.nodedata.</tt><tt class="descname">NodeData</tt><a class="reference internal" href="_modules/libpgm/nodedata.html#NodeData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.nodedata.NodeData" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents the node data for each node in a graph. If the Bayesian network is static, it contains the attribute <em>Vdata</em>. If the Bayesian network is dynamic, it contains two attributes, <em>initial_Vdata</em> and <em>twotbn_Vdata</em>. If the Bayesian network has hybrid CPDs, it contains the additional attribute <em>nodes</em>.</p>
+<dl class="attribute">
+<dt id="libpgm.nodedata.NodeData.Vdata">
+<tt class="descname">Vdata</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.nodedata.NodeData.Vdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary of node data.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.nodedata.NodeData.initial_Vdata">
+<tt class="descname">initial_Vdata</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.nodedata.NodeData.initial_Vdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>In dynamic graphs, a dictionary containing node data for the initial time interval.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.nodedata.NodeData.twotbn_Vdata">
+<tt class="descname">twotbn_Vdata</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.nodedata.NodeData.twotbn_Vdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>In dynamic graphs, a dictionary containing node data for every time step interval after the first one.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.nodedata.NodeData.nodes">
+<tt class="descname">nodes</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.nodedata.NodeData.nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>In hybrid graphs, a dictionary of {key:value} pairs linking the name of each node (the key) to a clas instance (the value) which represents the node, its data, and its sampling function.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.nodedata.NodeData.load">
+<tt class="descname">load</tt><big>(</big><em>path</em><big>)</big><a class="reference internal" href="_modules/libpgm/nodedata.html#NodeData.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.nodedata.NodeData.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load node data from an input file located at <em>path</em>. Input file must be a plaintext .txt file with a JSON-style representation of a dict. The dict must have the top-level key <tt class="docutils literal"><span class="pre">Vdata</span></tt> or two top-level keys, <tt class="docutils literal"><span class="pre">initial_Vdata</span></tt> and <tt class="docutils literal"><span class="pre">twotbn_Vdata</span></tt>. For example:</p>
+<div class="highlight-python"><pre>{
+    "Vdata": {
+        "&lt;vertex 1&gt;": &lt;dict containing vertex 1 data&gt;,
+        ...
+        "&lt;vertex n&gt;": &lt;dict containing vertex n data&gt;
+    }
+}</pre>
+</div>
+<p>or:</p>
+<div class="highlight-python"><pre>{
+    "initial_Vdata": {
+        "&lt;vertex 1&gt;": &lt;dict containing vertex 1 data&gt;,
+        ...
+        "&lt;vertex n&gt;": &lt;dict containing vertex n data&gt;
+    }
+    "twotbn_Vdata": {
+        "&lt;vertex 1&gt;": &lt;dict containing vertex 1 data&gt;,
+        ...
+        "&lt;vertex n&gt;": &lt;dict containing vertex n data&gt;
+    }
+}</pre>
+</div>
+<dl class="docutils">
+<dt>The function takes the following arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>path</em> &#8211; The path to the text file that contains input data (e.g., &#8220;mydictionary.txt&#8221;)</li>
+</ol>
+</dd>
+</dl>
+<p>In the static case, it modifies <em>Vdata</em> to hold the dictionary found at path. In the dynamic case, it modifies the <em>initial_Vdata</em> and <em>twotbn_Vdata</em> attributes to hold the dictionaries found at path.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.nodedata.NodeData.entriestoinstances">
+<tt class="descname">entriestoinstances</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/libpgm/nodedata.html#NodeData.entriestoinstances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.nodedata.NodeData.entriestoinstances" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each node, convert dictionary entry to class instance.</p>
+<p>This method is used only when dealing with Hybrid Bayesian networks as found in the <a class="reference internal" href="hybayesiannetwork.html"><em>hybayesiannetwork</em></a> module.</p>
+<p>The type of the node must be located in the &#8216;type&#8217; attribute of the node&#8217;s dictionary entry. To see an example of such a dictionary, see <a class="reference internal" href="unittesthdict.html"><em>hybrid bayesian network</em></a>. This type is used to instantiate a corresponding class from libpgm/CPDtypes/, and store the node&#8217;s dictionary info in that class. Thus we lose none of the dictionary data, yet we gain the ability to use the instantiated class&#8217;s built-in function to choose its own outcome based on the outcomes of its parents.</p>
+<p>In order for this method to be called, the self.Vdata attribute must have dictionary entries of the following form:</p>
+<div class="highlight-python"><pre>&lt;vertex name&gt;: {
+    'type': &lt;type of node -- must correspond to module in /CPDtypes&gt;,
+    'parents': &lt;array of parents of node&gt;,
+    'children': &lt;array of children of node&gt;,
+    &lt;whatever further entries are required by the type*&gt; 
+}</pre>
+</div>
+<p>For instance, type &#8220;discrete&#8221; requires a &#8220;cprob&#8221; entry, while type &#8220;lg&#8221;
+requires &#8220;mean_base&#8221;, &#8220;mean_scal&#8221;, and &#8220;variance&#8221; entries.</p>
+<p>The function draws on the data in the <em>Vdata</em> attribute, and instantiates the attribute <em>nodes</em>, which is a dictionary of {name: instance} pairs where &#8216;name&#8217; is the name of the node and &#8216;instance&#8217; is a class instance containing the node data and the proper sampling function.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="orderedskeleton.html"
+                        title="previous chapter">orderedskeleton</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="discretebayesiannetwork.html"
+                        title="next chapter">discretebayesiannetwork</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/nodedata.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="discretebayesiannetwork.html" title="discretebayesiannetwork"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="orderedskeleton.html" title="orderedskeleton"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

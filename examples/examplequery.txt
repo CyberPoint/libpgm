@@ -1,0 +1,13 @@
+# a sample query dictionary
+#
+# example:
+#
+#    {
+#        'Grade': ['A', 'B']
+#    }
+#
+#  means that you want to know the probability that Grade has outcome A or B.
+#
+{
+	'Grade': ['A', 'B']
+}

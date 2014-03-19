@@ -1,0 +1,207 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>hybayesiannetwork &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="lgbayesiannetwork" href="lgbayesiannetwork.html" />
+    <link rel="prev" title="discretebayesiannetwork" href="discretebayesiannetwork.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="lgbayesiannetwork.html" title="lgbayesiannetwork"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="discretebayesiannetwork.html" title="discretebayesiannetwork"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-libpgm.hybayesiannetwork">
+<span id="hybayesiannetwork"></span><h1>hybayesiannetwork<a class="headerlink" href="#module-libpgm.hybayesiannetwork" title="Permalink to this headline">¶</a></h1>
+<p>This module provides tools to represent and handle Bayesian networks with conditional probability distributions that can be specified node-by-node.</p>
+<p>This method allows for the construction of a Bayesian network with every combination of every type of CPD, provided that the user provides a method for sampling each type of node and stores this method in the proper place, namely as the <tt class="docutils literal"><span class="pre">choose()</span></tt> method of a class in <tt class="docutils literal"><span class="pre">libpgm.CPDtypes/</span></tt>.</p>
+<dl class="class">
+<dt id="libpgm.hybayesiannetwork.HyBayesianNetwork">
+<em class="property">class </em><tt class="descclassname">libpgm.hybayesiannetwork.</tt><tt class="descname">HyBayesianNetwork</tt><big>(</big><em>orderedskeleton=None</em>, <em>nodedata=None</em><big>)</big><a class="reference internal" href="_modules/libpgm/hybayesiannetwork.html#HyBayesianNetwork"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.hybayesiannetwork.HyBayesianNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents a Bayesian network with CPDs of any type. The nodes of the Bayesian network are stored first in a dictionary, specifying their &#8220;type&#8221;, which should be descriptive (&#8216;discrete&#8217;, &#8216;lg&#8217;, etc.). Furthermore, the types of each node associate them with a class found in <tt class="docutils literal"><span class="pre">libpgm/CPDtypes/</span></tt>. The nodes are then stored also as instances of classes found in this directory. The purpose of this is that each node has its own method for being sampled given the outcomes of its parents.</p>
+<p>This class can be called either with or without arguments. If it is called without arguments, none of its attributes are instantiated and it is left to the user to instantiate them manually. If it is called with arguments, the attributes will be loaded directly from the inputs. The arguments must be (in order):</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><em>orderedskeleton</em> &#8211; An instance of the <a class="reference internal" href="orderedskeleton.html"><em>OrderedSkeleton</em></a> or <a class="reference internal" href="graphskeleton.html"><em>GraphSkeleton</em></a> (as long as it&#8217;s ordered) class.</li>
+<li><em>nodedata</em> &#8211; An instance of the <a class="reference internal" href="nodedata.html"><em>NodeData</em></a> class.</li>
+</ol>
+</div></blockquote>
+<p>It is required that the <em>nodedata</em> class instance inputted has its <em>nodes</em> attribute instantiated. In order for this to be the case, the instance must have run its <em>entriestoinstances</em> method.</p>
+<p>If the arguments above are present, all attributes of the class (<em>V</em>, <em>E</em>, <em>Vdata</em>, and <em>nodes</em>) will be automatically copied from the graph skeleton and node data inputs.</p>
+<p>Upon loading, the class will also check that the keys of <em>Vdata</em> correspond to the vertices in <em>V</em>.</p>
+<dl class="attribute">
+<dt id="libpgm.hybayesiannetwork.HyBayesianNetwork.V">
+<tt class="descname">V</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.hybayesiannetwork.HyBayesianNetwork.V" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of the names of the vertices.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.hybayesiannetwork.HyBayesianNetwork.E">
+<tt class="descname">E</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.hybayesiannetwork.HyBayesianNetwork.E" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of [origin, destination] pairs of vertices that make edges.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.hybayesiannetwork.HyBayesianNetwork.Vdata">
+<tt class="descname">Vdata</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.hybayesiannetwork.HyBayesianNetwork.Vdata" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary containing CPD data for the nodes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.hybayesiannetwork.HyBayesianNetwork.nodes">
+<tt class="descname">nodes</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.hybayesiannetwork.HyBayesianNetwork.nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary of {key: value} pairs linking the node name (the key) to a class instance (the value) representing the node, its node data, and its sampling function.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.hybayesiannetwork.HyBayesianNetwork.randomsample">
+<tt class="descname">randomsample</tt><big>(</big><em>n</em>, <em>evidence=None</em><big>)</big><a class="reference internal" href="_modules/libpgm/hybayesiannetwork.html#HyBayesianNetwork.randomsample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.hybayesiannetwork.HyBayesianNetwork.randomsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce <em>n</em> random samples from the Bayesian networki, subject to <em>evidence</em>, and return them in a list. This function requires the <em>nodes</em> attribute to be instantiated.</p>
+<p>This function takes the following arguments:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><em>n</em> &#8211; The number of random samples to produce.</li>
+<li><em>evidence</em> &#8211; (Optional) A dict containing (vertex: value) pairs that describe the evidence. To be used carefully because it does manually overrides the nodes with evidence instead of affecting the joint probability distribution of the entire graph.</li>
+</ol>
+</div></blockquote>
+<dl class="docutils">
+<dt>And returns:</dt>
+<dd>A list of <em>n</em> independent random samples, each element of which is a dict containing (vertex: value) pairs.</dd>
+</dl>
+<p>Usage example: this would generate a sequence of 10 random samples:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">libpgm.nodedata</span> <span class="kn">import</span> <span class="n">NodeData</span>
+<span class="kn">from</span> <span class="nn">libpgm.graphskeleton</span> <span class="kn">import</span> <span class="n">GraphSkeleton</span>
+<span class="kn">from</span> <span class="nn">libpgm.hybayesiannetwork</span> <span class="kn">import</span> <span class="n">HyBayesianNetwork</span>
+
+<span class="c"># load nodedata and graphskeleton</span>
+<span class="n">nd</span> <span class="o">=</span> <span class="n">NodeData</span><span class="p">()</span>
+<span class="n">skel</span> <span class="o">=</span> <span class="n">GraphSkeleton</span><span class="p">()</span>
+<span class="n">nd</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&quot;../tests/unittesthdict.txt&quot;</span><span class="p">)</span>   <span class="c"># an input file</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">&quot;../tests/unittestdict.txt&quot;</span><span class="p">)</span>
+
+<span class="c"># topologically order graphskeleton</span>
+<span class="n">skel</span><span class="o">.</span><span class="n">toporder</span><span class="p">()</span>
+
+<span class="c"># convert nodes to class instances</span>
+<span class="n">nd</span><span class="o">.</span><span class="n">entriestoinstances</span><span class="p">()</span>
+
+<span class="c"># load bayesian network</span>
+<span class="n">hybn</span> <span class="o">=</span> <span class="n">HyBayesianNetwork</span><span class="p">(</span><span class="n">skel</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+
+<span class="c"># sample </span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">hybn</span><span class="o">.</span><span class="n">randomsample</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="c"># output</span>
+<span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="discretebayesiannetwork.html"
+                        title="previous chapter">discretebayesiannetwork</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="lgbayesiannetwork.html"
+                        title="next chapter">lgbayesiannetwork</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/hybayesiannetwork.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="lgbayesiannetwork.html" title="lgbayesiannetwork"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="discretebayesiannetwork.html" title="discretebayesiannetwork"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

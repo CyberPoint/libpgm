@@ -1,0 +1,215 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>graphskeleton &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="orderedskeleton" href="orderedskeleton.html" />
+    <link rel="prev" title="dictionary" href="dictionary.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="orderedskeleton.html" title="orderedskeleton"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dictionary.html" title="dictionary"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-libpgm.graphskeleton">
+<span id="graphskeleton"></span><h1>graphskeleton<a class="headerlink" href="#module-libpgm.graphskeleton" title="Permalink to this headline">¶</a></h1>
+<p>This module provides tools for creating and using graph skeletons for Bayesian networks. A graph skeleton in this case is a vertex set and a directed edge set, with no further information about the specific nodes.</p>
+<dl class="class">
+<dt id="libpgm.graphskeleton.GraphSkeleton">
+<em class="property">class </em><tt class="descclassname">libpgm.graphskeleton.</tt><tt class="descname">GraphSkeleton</tt><a class="reference internal" href="_modules/libpgm/graphskeleton.html#GraphSkeleton"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.graphskeleton.GraphSkeleton" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents a graph skeleton, meaning a vertex set and a directed edge set. It contains the attributes <em>V</em> and <em>E</em>, and the methods <em>load</em>, <em>getparents</em>, <em>getchildren</em>, and <em>toporder</em>.</p>
+<dl class="attribute">
+<dt id="libpgm.graphskeleton.GraphSkeleton.V">
+<tt class="descname">V</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.graphskeleton.GraphSkeleton.V" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of names of vertices.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.graphskeleton.GraphSkeleton.E">
+<tt class="descname">E</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.graphskeleton.GraphSkeleton.E" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of [origin, destination] pairs of vertices that constitute edges.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.graphskeleton.GraphSkeleton.alldata">
+<tt class="descname">alldata</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.graphskeleton.GraphSkeleton.alldata" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Inherited from dictionary) A variable that stores a key-indexable dictionary once it is loaded from a file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.graphskeleton.GraphSkeleton.load">
+<tt class="descname">load</tt><big>(</big><em>path</em><big>)</big><a class="reference internal" href="_modules/libpgm/graphskeleton.html#GraphSkeleton.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.graphskeleton.GraphSkeleton.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the graph skeleton from a text file located at <em>path</em>.</p>
+<p>Text file must be a plaintext .txt file with a JSON-style representation of a dict.  Dict must contain the top-level keys &#8220;V&#8221; and &#8220;E&#8221; with the following formats:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&#39;V&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;&lt;vertex_name_1&gt;&#39;</span><span class="p">,</span> <span class="o">...</span> <span class="p">,</span> <span class="s">&#39;&lt;vertex_name_n&#39;</span><span class="p">],</span>
+    <span class="s">&#39;E&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s">&#39;vertex_of_origin&#39;</span><span class="p">,</span> <span class="s">&#39;vertex_of_destination&#39;</span><span class="p">],</span> <span class="o">...</span> <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>path</em> &#8211; The path to the file containing input data (e.g., &#8220;mydictionary.txt&#8221;).</li>
+</ol>
+</dd>
+<dt>Attributes modified: </dt>
+<dd><ol class="first last arabic simple">
+<li><em>V</em> &#8211; The set of vertices.</li>
+<li><em>E</em> &#8211; The set of edges.</li>
+</ol>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.graphskeleton.GraphSkeleton.getparents">
+<tt class="descname">getparents</tt><big>(</big><em>vertex</em><big>)</big><a class="reference internal" href="_modules/libpgm/graphskeleton.html#GraphSkeleton.getparents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.graphskeleton.GraphSkeleton.getparents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the parents of <em>vertex</em> in the graph skeleton.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>vertex</em> &#8211; The name of the vertex whose parents the function finds.</li>
+</ol>
+</dd>
+<dt>Returns:</dt>
+<dd>A list containing the names of the parents of the vertex.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.graphskeleton.GraphSkeleton.getchildren">
+<tt class="descname">getchildren</tt><big>(</big><em>vertex</em><big>)</big><a class="reference internal" href="_modules/libpgm/graphskeleton.html#GraphSkeleton.getchildren"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.graphskeleton.GraphSkeleton.getchildren" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the children of <em>vertex</em> in the graph skeleton.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>vertex</em> &#8211; The name of the vertex whose children the function finds.</li>
+</ol>
+</dd>
+<dt>Returns:</dt>
+<dd>A list containing the names of the children of the vertex.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.graphskeleton.GraphSkeleton.toporder">
+<tt class="descname">toporder</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/libpgm/graphskeleton.html#GraphSkeleton.toporder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.graphskeleton.GraphSkeleton.toporder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify the vertices of the graph skeleton such that they are in topological order.</p>
+<p>A topological order is an order of vertices such that if there is an edge from <em>u</em> to <em>v</em>, <em>u</em> appears before <em>v</em> in the ordering. It works only for directed ayclic graphs.</p>
+<dl class="docutils">
+<dt>Attributes modified:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>V</em> &#8211; The names of the vertices are put in topological order.</li>
+</ol>
+</dd>
+</dl>
+<p>The function also checks for cycles in the graph, and returns an error if one is found.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dictionary.html"
+                        title="previous chapter">dictionary</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="orderedskeleton.html"
+                        title="next chapter">orderedskeleton</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/graphskeleton.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="orderedskeleton.html" title="orderedskeleton"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dictionary.html" title="dictionary"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

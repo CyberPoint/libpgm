@@ -1,0 +1,212 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>libpgm.CPDtypes.lgandd &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for libpgm.CPDtypes.lgandd</h1><div class="highlight"><pre>
+<span class="c"># Copyright (c) 2012, CyberPoint International, LLC</span>
+<span class="c"># All rights reserved.</span>
+<span class="c"># </span>
+<span class="c"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer.</span>
+<span class="c">#     * Redistributions in binary form must reproduce the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer in the</span>
+<span class="c">#       documentation and/or other materials provided with the distribution.</span>
+<span class="c">#     * Neither the name of the CyberPoint International, LLC nor the</span>
+<span class="c">#       names of its contributors may be used to endorse or promote products</span>
+<span class="c">#       derived from this software without specific prior written permission.</span>
+<span class="c"># </span>
+<span class="c"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="c"># ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="c"># WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c"># DISCLAIMED. IN NO EVENT SHALL CYBERPOINT INTERNATIONAL, LLC BE LIABLE FOR ANY</span>
+<span class="c"># DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="c"># (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="c"># LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND</span>
+<span class="c"># ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="c"># SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module contains tools for representing &quot;LG + D&quot; (linear Gaussian and discrete) nodes -- those with a Gaussian distribution, one or more Gaussian parents, and one or more discrete parents -- as class instances with their own *choose* method to choose an outcome for themselves based on parent outcomes.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<div class="viewcode-block" id="Lgandd"><a class="viewcode-back" href="../../../CPDtypes.html#libpgm.CPDtypes.lgandd.Lgandd">[docs]</a><span class="k">class</span> <span class="nc">Lgandd</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This class represents a LG + D node, as described above. It contains the *Vdataentry* attribute and the *choose* method</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Vdataentry</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This class is constructed with the argument *Vdataentry* which must be a dict containing a dictionary entry for this particualr node. The dict must contain an entry of the following form::</span>
+
+<span class="sd">            &quot;cprob&quot;: {</span>
+<span class="sd">                &quot;[&#39;&lt;parent 1, value 1&gt;&#39;,...,&#39;&lt;parent n, value 1&gt;&#39;]&quot;: {</span>
+<span class="sd">                                &quot;mean_base&quot;: &lt;float used for mean starting point</span>
+<span class="sd">                                              (\mu_0)&gt;,</span>
+<span class="sd">                                &quot;mean_scal&quot;: &lt;array of scalars by which to</span>
+<span class="sd">                                              multiply respectively ordered </span>
+<span class="sd">                                              continuous parent outcomes&gt;,</span>
+<span class="sd">                                &quot;variance&quot;: &lt;float for variance&gt;</span>
+<span class="sd">                            }</span>
+<span class="sd">                ...</span>
+<span class="sd">                &quot;[&#39;&lt;parent 1, value j&gt;&#39;,...,&#39;&lt;parent n, value k&gt;&#39;]&quot;: {</span>
+<span class="sd">                                &quot;mean_base&quot;: &lt;float used for mean starting point</span>
+<span class="sd">                                              (\mu_0)&gt;,</span>
+<span class="sd">                                &quot;mean_scal&quot;: &lt;array of scalars by which to</span>
+<span class="sd">                                              multiply respectively ordered </span>
+<span class="sd">                                              continuous parent outcomes&gt;,</span>
+<span class="sd">                                &quot;variance&quot;: &lt;float for variance&gt;</span>
+<span class="sd">                            }</span>
+<span class="sd">            }</span>
+
+<span class="sd">        This ``&quot;cprob&quot;`` entry contains a linear Gaussian distribution (conditioned on the Gaussian parents) for each combination of discrete parents.  The *Vdataentry* attribute is set equal to this *Vdataentry* input upon instantiation.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Vdataentry</span> <span class="o">=</span> <span class="n">Vdataentry</span>
+        <span class="sd">&#39;&#39;&#39;A dict containing CPD data for the node.&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="Lgandd.choose"><a class="viewcode-back" href="../../../CPDtypes.html#libpgm.CPDtypes.lgandd.Lgandd.choose">[docs]</a>    <span class="k">def</span> <span class="nf">choose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pvalues</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Randomly choose state of node from probability distribution conditioned on *pvalues*.</span>
+
+<span class="sd">        This method has two parts: (1) determining the proper probability</span>
+<span class="sd">        distribution, and (2) using that probability distribution to determine</span>
+<span class="sd">        an outcome.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *pvalues* -- An array containing the assigned states of the node&#39;s parents. This must be in the same order as the parents appear in ``self.Vdataentry[&#39;parents&#39;]``.</span>
+
+<span class="sd">        The function goes to the entry of ``&quot;cprob&quot;`` that matches the outcomes of its discrete parents. Then, it constructs a Gaussian distribution based on its Gaussian parents and the parameters found at that entry. Last, it samples from that distribution and returns its outcome.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">()</span>
+
+        <span class="c"># split parents by type</span>
+        <span class="n">dispvals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lgpvals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">pval</span> <span class="ow">in</span> <span class="n">pvalues</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">pval</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+                <span class="n">dispvals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pval</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lgpvals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pval</span><span class="p">)</span>
+      
+
+        <span class="c"># error check</span>
+        <span class="k">try</span><span class="p">:</span> 
+            <span class="n">a</span> <span class="o">=</span> <span class="n">dispvals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">lgpvals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Did not find LG and discrete type parents.&quot;</span>
+
+        <span class="c"># find correct Gaussian</span>
+        <span class="n">lgdistribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Vdataentry</span><span class="p">[</span><span class="s">&quot;hybcprob&quot;</span><span class="p">][</span><span class="nb">str</span><span class="p">(</span><span class="n">dispvals</span><span class="p">)]</span>
+
+        <span class="c"># calculate Bayesian parameters (mean and variance)</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">lgdistribution</span><span class="p">[</span><span class="s">&quot;mean_base&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Vdataentry</span><span class="p">[</span><span class="s">&quot;parents&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lgpvals</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">lgpvals</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&quot;default&quot;</span><span class="p">):</span>
+                    <span class="n">mean</span> <span class="o">+=</span> <span class="n">lgpvals</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="n">lgdistribution</span><span class="p">[</span><span class="s">&quot;mean_scal&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+
+                    <span class="c"># temporary error check </span>
+                    <span class="k">print</span> <span class="s">&quot;Attempted to sample node with unassigned parents.&quot;</span>
+
+        <span class="n">variance</span> <span class="o">=</span> <span class="n">lgdistribution</span><span class="p">[</span><span class="s">&quot;variance&quot;</span><span class="p">]</span>
+
+        <span class="c"># draw random outcome from Gaussian (I love python)</span>
+        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">gauss</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variance</span><span class="p">))</span>          </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

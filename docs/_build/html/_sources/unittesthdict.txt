@@ -1,0 +1,81 @@
+hybrid bayesian network
+=======================
+
+This is an example input file for a "hybrid" Bayesian network, i.e., one with varying types of conditional probability distributions. It provides hybrid CPD data for the same graph skeleton as in the :doc:`discrete case <unittestdict>`::
+
+    {
+        "Vdata": {
+            "Grade": {
+                "parents": [
+                    "Difficulty", 
+                    "Intelligence"
+                ], 
+                "type": "lgandd", 
+                "children": [
+                    "Letter"
+                ], 
+                "hybcprob": {
+                    "['high']": {
+                        "variance": 10, 
+                        "mean_base": 20, 
+                        "mean_scal": [
+                            1
+                        ]
+                    }, 
+                    "['low']": {
+                        "variance": 10, 
+                        "mean_base": 10, 
+                        "mean_scal": [
+                            1
+                        ]
+                    }
+                }
+            }, 
+            "Intelligence": {
+                "numoutcomes": 2, 
+                "cprob": [
+                    0.9, 
+                    0.1
+                ], 
+                "parents": null, 
+                "vals": [
+                    "low", 
+                    "high"
+                ], 
+                "type": "discrete", 
+                "children": [
+                    "SAT", 
+                    "Grade"
+                ]
+            }, 
+            "Difficulty": {
+                "mean_base": 50, 
+                "mean_scal": [], 
+                "parents": null, 
+                "variance": 18, 
+                "type": "lg", 
+                "children": [
+                    "Grade"
+                ]
+            }, 
+            "Letter": {
+                "mean_base": -110, 
+                "mean_scal": [
+                    2
+                ], 
+                "parents": [
+                    "Grade"
+                ], 
+                "variance": 10, 
+                "type": "lg", 
+                "children": null
+            }, 
+            "SAT": {
+                "parents": [
+                    "Intelligence"
+                ], 
+                "crazyinput": 7, 
+                "type": "crazy"
+            }
+        }
+    }

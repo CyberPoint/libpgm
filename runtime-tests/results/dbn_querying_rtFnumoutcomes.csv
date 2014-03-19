@@ -1,0 +1,10 @@
+Probability querying in a discrete BN. Runtime as a function of numoutcomes. Numvertices=300. Indegree=3. Evidence=None. Queried node=root of tree.
+2, 0.060000
+3, 0.150000
+4, 0.420000
+5, 1.080000
+6, 2.380000
+7, 4.970000
+8, 9.290000
+9, 16.890000
+10, 27.960000

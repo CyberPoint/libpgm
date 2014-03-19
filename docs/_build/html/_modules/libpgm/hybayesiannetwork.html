@@ -1,0 +1,248 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>libpgm.hybayesiannetwork &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for libpgm.hybayesiannetwork</h1><div class="highlight"><pre>
+<span class="c"># Copyright (c) 2012, CyberPoint International, LLC</span>
+<span class="c"># All rights reserved.</span>
+<span class="c"># </span>
+<span class="c"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer.</span>
+<span class="c">#     * Redistributions in binary form must reproduce the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer in the</span>
+<span class="c">#       documentation and/or other materials provided with the distribution.</span>
+<span class="c">#     * Neither the name of the CyberPoint International, LLC nor the</span>
+<span class="c">#       names of its contributors may be used to endorse or promote products</span>
+<span class="c">#       derived from this software without specific prior written permission.</span>
+<span class="c"># </span>
+<span class="c"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="c"># ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="c"># WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c"># DISCLAIMED. IN NO EVENT SHALL CYBERPOINT INTERNATIONAL, LLC BE LIABLE FOR ANY</span>
+<span class="c"># DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="c"># (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="c"># LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND</span>
+<span class="c"># ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="c"># SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module provides tools to represent and handle Bayesian networks with conditional probability distributions that can be specified node-by-node. </span>
+
+<span class="sd">This method allows for the construction of a Bayesian network with every combination of every type of CPD, provided that the user provides a method for sampling each type of node and stores this method in the proper place, namely as the ``choose()`` method of a class in ``libpgm.CPDtypes/``.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">orderedskeleton</span> <span class="kn">import</span> <span class="n">OrderedSkeleton</span>
+
+<div class="viewcode-block" id="HyBayesianNetwork"><a class="viewcode-back" href="../../hybayesiannetwork.html#libpgm.hybayesiannetwork.HyBayesianNetwork">[docs]</a><span class="k">class</span> <span class="nc">HyBayesianNetwork</span><span class="p">(</span><span class="n">OrderedSkeleton</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This class represents a Bayesian network with CPDs of any type. The nodes of the Bayesian network are stored first in a dictionary, specifying their &quot;type&quot;, which should be descriptive (&#39;discrete&#39;, &#39;lg&#39;, etc.). Furthermore, the types of each node associate them with a class found in ``libpgm/CPDtypes/``. The nodes are then stored also as instances of classes found in this directory. The purpose of this is that each node has its own method for being sampled given the outcomes of its parents.</span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orderedskeleton</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nodedata</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This class can be called either with or without arguments. If it is called without arguments, none of its attributes are instantiated and it is left to the user to instantiate them manually. If it is called with arguments, the attributes will be loaded directly from the inputs. The arguments must be (in order):</span>
+
+<span class="sd">            1. *orderedskeleton* -- An instance of the :doc:`OrderedSkeleton &lt;orderedskeleton&gt;` or :doc:`GraphSkeleton &lt;graphskeleton&gt;` (as long as it&#39;s ordered) class.</span>
+<span class="sd">            2. *nodedata* -- An instance of the :doc:`NodeData &lt;nodedata&gt;` class.</span>
+<span class="sd">        </span>
+<span class="sd">        It is required that the *nodedata* class instance inputted has its *nodes* attribute instantiated. In order for this to be the case, the instance must have run its *entriestoinstances* method.</span>
+
+<span class="sd">        If the arguments above are present, all attributes of the class (*V*, *E*, *Vdata*, and *nodes*) will be automatically copied from the graph skeleton and node data inputs.</span>
+
+<span class="sd">        Upon loading, the class will also check that the keys of *Vdata* correspond to the vertices in *V*.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">orderedskeleton</span> <span class="o">!=</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">nodedata</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">orderedskeleton</span><span class="o">.</span><span class="n">V</span>
+                <span class="sd">&#39;&#39;&#39;A list of the names of the vertices.&#39;&#39;&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">orderedskeleton</span><span class="o">.</span><span class="n">E</span>
+                <span class="sd">&#39;&#39;&#39;A list of [origin, destination] pairs of vertices that make edges.&#39;&#39;&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Vdata</span> <span class="o">=</span> <span class="n">nodedata</span><span class="o">.</span><span class="n">Vdata</span>
+                <span class="sd">&#39;&#39;&#39;A dictionary containing CPD data for the nodes.&#39;&#39;&#39;</span>
+            
+                <span class="c"># specific to hybrid Bayesian network</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">nodedata</span><span class="o">.</span><span class="n">nodes</span>
+                <span class="sd">&#39;&#39;&#39;A dictionary of {key: value} pairs linking the node name (the key) to a class instance (the value) representing the node, its node data, and its sampling function.&#39;&#39;&#39;</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">,</span> <span class="s">&quot;Inputs were malformed; first arg must contain V and E attributes and second arg must contain Vdata and nodes attributes.&quot;</span>
+
+            <span class="c"># check that inputs match up</span>
+            <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">)</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Vdata</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="s">&quot;Node data did not match graph skeleton nodes.&quot;</span>
+    
+<div class="viewcode-block" id="HyBayesianNetwork.randomsample"><a class="viewcode-back" href="../../hybayesiannetwork.html#libpgm.hybayesiannetwork.HyBayesianNetwork.randomsample">[docs]</a>    <span class="k">def</span> <span class="nf">randomsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">evidence</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Produce *n* random samples from the Bayesian networki, subject to *evidence*, and return them in a list. This function requires the *nodes* attribute to be instantiated.</span>
+<span class="sd">        </span>
+<span class="sd">        This function takes the following arguments:</span>
+
+<span class="sd">            1. *n* -- The number of random samples to produce.</span>
+<span class="sd">            2. *evidence* -- (Optional) A dict containing (vertex: value) pairs that describe the evidence. To be used carefully because it does manually overrides the nodes with evidence instead of affecting the joint probability distribution of the entire graph.</span>
+<span class="sd">        </span>
+<span class="sd">        And returns:</span>
+<span class="sd">            A list of *n* independent random samples, each element of which is a dict containing (vertex: value) pairs.</span>
+<span class="sd">        </span>
+<span class="sd">        Usage example: this would generate a sequence of 10 random samples::</span>
+<span class="sd">            </span>
+<span class="sd">            import json</span>
+
+<span class="sd">            from libpgm.nodedata import NodeData</span>
+<span class="sd">            from libpgm.graphskeleton import GraphSkeleton</span>
+<span class="sd">            from libpgm.hybayesiannetwork import HyBayesianNetwork</span>
+
+<span class="sd">            # load nodedata and graphskeleton</span>
+<span class="sd">            nd = NodeData()</span>
+<span class="sd">            skel = GraphSkeleton()</span>
+<span class="sd">            nd.load(&quot;../tests/unittesthdict.txt&quot;)   # an input file</span>
+<span class="sd">            skel.load(&quot;../tests/unittestdict.txt&quot;)</span>
+
+<span class="sd">            # topologically order graphskeleton</span>
+<span class="sd">            skel.toporder()</span>
+
+<span class="sd">            # convert nodes to class instances</span>
+<span class="sd">            nd.entriestoinstances()</span>
+
+<span class="sd">            # load bayesian network</span>
+<span class="sd">            hybn = HyBayesianNetwork(skel, nd)</span>
+
+<span class="sd">            # sample </span>
+<span class="sd">            result = hybn.randomsample(10)</span>
+
+<span class="sd">            # output</span>
+<span class="sd">            print json.dumps(result, indent=2)</span>
+<span class="sd">            </span>
+
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span> <span class="s">&quot;Argument must be a positive integer.&quot;</span>
+        
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">()</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">outcome</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">:</span>
+                <span class="n">outcome</span><span class="p">[</span><span class="n">vertex</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;default&quot;</span>
+            
+            <span class="k">def</span> <span class="nf">assignnode</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+                
+                <span class="c"># check if node is already observed</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">evidence</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">evidence</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="k">return</span> <span class="n">evidence</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                
+                <span class="c"># get parent values</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getparents</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">==</span> <span class="p">[]):</span>
+                    <span class="n">pvalues</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">pvalues</span> <span class="o">=</span> <span class="p">[</span><span class="n">outcome</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]]</span> <span class="c"># ideally can we pull this from the skeleton so as not to store parent data at all?</span>
+                    <span class="k">for</span> <span class="n">pvalue</span> <span class="ow">in</span> <span class="n">pvalues</span><span class="p">:</span>
+                        <span class="k">assert</span> <span class="n">pvalue</span> <span class="o">!=</span> <span class="s">&#39;default&#39;</span><span class="p">,</span> <span class="s">&quot;Graph skeleton was not topologically ordered.&quot;</span>
+                
+                <span class="c"># use built in function to determine outcome</span>
+                <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">choose</span><span class="p">(</span><span class="n">pvalues</span><span class="p">)</span>
+           
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">outcome</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;default&quot;</span><span class="p">):</span>
+                    <span class="n">outcome</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">assignnode</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+            
+            <span class="n">seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outcome</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">seq</span>
+        </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

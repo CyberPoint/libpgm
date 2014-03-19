@@ -1,0 +1,217 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tablecpdfactor &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="index.html" />
+    <link rel="next" title="sampleaggregator" href="sampleaggregator.html" />
+    <link rel="prev" title="tablecpdfactorization" href="tablecpdfactorization.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sampleaggregator.html" title="sampleaggregator"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tablecpdfactorization.html" title="tablecpdfactorization"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-libpgm.tablecpdfactor">
+<span id="tablecpdfactor"></span><h1>tablecpdfactor<a class="headerlink" href="#module-libpgm.tablecpdfactor" title="Permalink to this headline">¶</a></h1>
+<p>This module provides tools for creating and using an individual factorized representation of a node. See description of factorized representations in <a class="reference internal" href="tablecpdfactorization.html"><em>tablecpdfactorization</em></a>.</p>
+<dl class="class">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor">
+<em class="property">class </em><tt class="descclassname">libpgm.tablecpdfactor.</tt><tt class="descname">TableCPDFactor</tt><big>(</big><em>vertex</em>, <em>bn</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactor.html#TableCPDFactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class represents a factorized representation of a conditional probability distribution table. It contains the attributes <em>inputvertex</em>, <em>inputbn</em>, <em>vals</em>, <em>scope</em>, <em>stride</em>, and <em>card</em>, and the methods <em>multiplyfactor</em>, <em>sumout</em>, <em>reducefactor</em>, and <em>copy</em>.</p>
+<p>This class is constructed with a <a class="reference internal" href="discretebayesiannetwork.html"><em>DiscreteBayesianNetwork</em></a> instance and a <em>vertex</em> name as arguments. First it stores these inputs in <em>inputvertex</em> and <em>inputbn</em>. Then, it creates a factorized representation of <em>vertex</em>, storing the values in <em>vals</em>, the names of the variables involved in <em>scope</em> the cardinality of each of these variables in <em>card</em> and the stride of each of these variables in <em>stride</em>.</p>
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.inputvertex">
+<tt class="descname">inputvertex</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.inputvertex" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the vertex.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.inputbn">
+<tt class="descname">inputbn</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.inputbn" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="discretebayesiannetwork.html"><em>DiscreteBayesianNetwork</em></a> instance that the vertex lives in.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.vals">
+<tt class="descname">vals</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.vals" title="Permalink to this definition">¶</a></dt>
+<dd><p>A flat array of all the values from the CPD.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.scope">
+<tt class="descname">scope</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.scope" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array of vertices that affect the vals found in <em>vals</em>. Normally, this is the node itself and its parents.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.card">
+<tt class="descname">card</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.card" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of the cardinalities of each vertex in scope, where cardinality is the number of values that the vertex may take. The cardinalities are indexed according to the vertex&#8217;s index in <em>scope</em>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.stride">
+<tt class="descname">stride</tt><em class="property"> = None</em><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.stride" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dict of {vertex: value} pairs for each vertex in <em>scope</em>, where vertex is the name of the vertex and value is the stride of that vertex in the <em>vals</em> array.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.multiplyfactor">
+<tt class="descname">multiplyfactor</tt><big>(</big><em>other</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactor.html#TableCPDFactor.multiplyfactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.multiplyfactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiply the factor by another <a class="reference internal" href=""><em>TableCPDFactor</em></a>. Multiplying factors means taking the union of the scopes, and for each combination of variables in the scope, multiplying together the probabilities from each factor that that combination will be found.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>other</em> &#8211; An instance of the <a class="reference internal" href=""><em>TableCPDFactor</em></a> class representing the factor to multiply by.</li>
+</ol>
+</dd>
+<dt>Attributes modified: </dt>
+<dd><em>vals</em>, <em>scope</em>, <em>stride</em>, <em>card</em> &#8211; Modified to reflect the data of the new product factor.</dd>
+</dl>
+<p>For more information cf. Koller et al. 359.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.sumout">
+<tt class="descname">sumout</tt><big>(</big><em>vertex</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactor.html#TableCPDFactor.sumout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.sumout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum out the variable specified by <em>vertex</em> from the factor. Summing out means summing all sets of entries together where <em>vertex</em> is the only variable changing in the set. Then <em>vertex</em> is removed from the scope of the factor.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>vertex</em> &#8211; The name of the variable to be summed out.</li>
+</ol>
+</dd>
+<dt>Attributes modified: </dt>
+<dd><em>vals</em>, <em>scope</em>, <em>stride</em>, <em>card</em> &#8211; Modified to reflect the data of the summed-out product factor.</dd>
+</dl>
+<p>For more information see Koller et al. 297.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.reducefactor">
+<tt class="descname">reducefactor</tt><big>(</big><em>vertex</em>, <em>value</em><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactor.html#TableCPDFactor.reducefactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.reducefactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce the factor knowing that <em>vertex</em> equals <em>value</em>. Reducing the factor means erasing all possibilities for <em>vertex</em> other than <em>value</em> from the distribution, and removing <em>vertex</em> from the scope.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><ol class="first last arabic simple">
+<li><em>vertex</em> &#8211; The UUID of the variable whose outcome is known.</li>
+<li><em>value</em> &#8211; The known outcome of that variable.</li>
+</ol>
+</dd>
+<dt>Attributes modified: </dt>
+<dd><em>vals</em>, <em>scope</em>, <em>stride</em>, <em>card</em> &#8211; Modified to reflect the data of the reduced factor.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="libpgm.tablecpdfactor.TableCPDFactor.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/libpgm/tablecpdfactor.html#TableCPDFactor.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#libpgm.tablecpdfactor.TableCPDFactor.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a copy of the factor.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tablecpdfactorization.html"
+                        title="previous chapter">tablecpdfactorization</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sampleaggregator.html"
+                        title="next chapter">sampleaggregator</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/tablecpdfactor.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sampleaggregator.html" title="sampleaggregator"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tablecpdfactorization.html" title="tablecpdfactorization"
+             >previous</a> |</li>
+        <li><a href="index.html">libpgm 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

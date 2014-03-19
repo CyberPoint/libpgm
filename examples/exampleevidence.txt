@@ -1,0 +1,5 @@
+# a sample dict holding evidence. this dict says that we know the Difficulty
+# is easy
+{
+	'Difficulty': 'easy'
+}

@@ -1,0 +1,362 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>libpgm.tablecpdfactor &mdash; libpgm 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="libpgm 1.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for libpgm.tablecpdfactor</h1><div class="highlight"><pre>
+<span class="c"># Copyright (c) 2012, CyberPoint International, LLC</span>
+<span class="c"># All rights reserved.</span>
+<span class="c"># </span>
+<span class="c"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c">#     * Redistributions of source code must retain the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer.</span>
+<span class="c">#     * Redistributions in binary form must reproduce the above copyright</span>
+<span class="c">#       notice, this list of conditions and the following disclaimer in the</span>
+<span class="c">#       documentation and/or other materials provided with the distribution.</span>
+<span class="c">#     * Neither the name of the CyberPoint International, LLC nor the</span>
+<span class="c">#       names of its contributors may be used to endorse or promote products</span>
+<span class="c">#       derived from this software without specific prior written permission.</span>
+<span class="c"># </span>
+<span class="c"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="c"># ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="c"># WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c"># DISCLAIMED. IN NO EVENT SHALL CYBERPOINT INTERNATIONAL, LLC BE LIABLE FOR ANY</span>
+<span class="c"># DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES</span>
+<span class="c"># (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="c"># LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND</span>
+<span class="c"># ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</span>
+<span class="c"># (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="c"># SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module provides tools for creating and using an individual factorized representation of a node. See description of factorized representations in :doc:`tablecpdfactorization`.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span> 
+<span class="kn">from</span> <span class="nn">discretebayesiannetwork</span> <span class="kn">import</span> <span class="n">DiscreteBayesianNetwork</span>
+
+<div class="viewcode-block" id="TableCPDFactor"><a class="viewcode-back" href="../../tablecpdfactor.html#libpgm.tablecpdfactor.TableCPDFactor">[docs]</a><span class="k">class</span> <span class="nc">TableCPDFactor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This class represents a factorized representation of a conditional probability distribution table. It contains the attributes *inputvertex*, *inputbn*, *vals*, *scope*, *stride*, and *card*, and the methods *multiplyfactor*, *sumout*, *reducefactor*, and *copy*. </span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vertex</span><span class="p">,</span> <span class="n">bn</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This class is constructed with a :doc:`DiscreteBayesianNetwork &lt;discretebayesiannetwork&gt;` instance and a *vertex* name as arguments. First it stores these inputs in *inputvertex* and *inputbn*. Then, it creates a factorized representation of *vertex*, storing the values in *vals*, the names of the variables involved in *scope* the cardinality of each of these variables in *card* and the stride of each of these variables in *stride*.</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputvertex</span> <span class="o">=</span> <span class="n">vertex</span>
+        <span class="sd">&#39;&#39;&#39;The name of the vertex.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputbn</span> <span class="o">=</span> <span class="n">bn</span>
+        <span class="sd">&#39;&#39;&#39;The :doc:`DiscreteBayesianNetwork &lt;discretebayesiannetwork&gt;` instance that the vertex lives in.&#39;&#39;&#39;</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span> <span class="n">vals</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">stride</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(),</span> <span class="n">card</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">scope</span> <span class="o">=</span> <span class="p">[])</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span>
+        
+        <span class="c"># add values</span>
+        <span class="k">def</span> <span class="nf">explore</span><span class="p">(</span><span class="n">_dict</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">totaldepth</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">depth</span> <span class="o">==</span> <span class="n">totaldepth</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_dict</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)]:</span>
+                    <span class="n">result</span><span class="p">[</span><span class="s">&quot;vals&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">][</span><span class="n">depth</span><span class="p">]][</span><span class="s">&quot;vals&quot;</span><span class="p">]:</span>
+                    <span class="n">ckey</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:]</span>
+                    <span class="n">ckey</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+                    <span class="n">explore</span><span class="p">(</span><span class="n">_dict</span><span class="p">,</span> <span class="n">ckey</span><span class="p">,</span> <span class="n">depth</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">totaldepth</span><span class="p">)</span>
+                    
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]:</span>
+            <span class="n">result</span><span class="p">[</span><span class="s">&quot;vals&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;cprob&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">td</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">])</span>
+            <span class="n">explore</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="p">[],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">td</span><span class="p">)</span>
+        
+        <span class="c"># add cardinalities</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;numoutcomes&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]):</span>
+                <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">parent</span><span class="p">][</span><span class="s">&quot;numoutcomes&quot;</span><span class="p">])</span>
+            
+        <span class="c"># add scope</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&quot;parents&quot;</span><span class="p">]):</span>
+                <span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        
+        
+        <span class="c"># add strides</span>
+        <span class="n">stride</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&quot;stride&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">])):</span>
+            <span class="n">result</span><span class="p">[</span><span class="s">&quot;stride&quot;</span><span class="p">][</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">stride</span><span class="p">)</span>
+            <span class="n">stride</span> <span class="o">*=</span> <span class="n">bn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">]][</span><span class="s">&quot;numoutcomes&quot;</span><span class="p">]</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">vals</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;vals&quot;</span><span class="p">]</span>
+        <span class="sd">&#39;&#39;&#39;A flat array of all the values from the CPD.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scope</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">]</span>
+        <span class="sd">&#39;&#39;&#39;An array of vertices that affect the vals found in *vals*. Normally, this is the node itself and its parents.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">]</span>
+        <span class="sd">&#39;&#39;&#39;A list of the cardinalities of each vertex in scope, where cardinality is the number of values that the vertex may take. The cardinalities are indexed according to the vertex&#39;s index in *scope*.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;stride&quot;</span><span class="p">]</span>
+        <span class="sd">&#39;&#39;&#39;A dict of {vertex: value} pairs for each vertex in *scope*, where vertex is the name of the vertex and value is the stride of that vertex in the *vals* array.&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="TableCPDFactor.multiplyfactor"><a class="viewcode-back" href="../../tablecpdfactor.html#libpgm.tablecpdfactor.TableCPDFactor.multiplyfactor">[docs]</a>    <span class="k">def</span> <span class="nf">multiplyfactor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>  <span class="c"># cf. PGM 359 </span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Multiply the factor by another :doc:`TableCPDFactor &lt;tablecpdfactor&gt;`. Multiplying factors means taking the union of the scopes, and for each combination of variables in the scope, multiplying together the probabilities from each factor that that combination will be found.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *other* -- An instance of the :doc:`TableCPDFactor &lt;tablecpdfactor&gt;` class representing the factor to multiply by.</span>
+<span class="sd">                 </span>
+<span class="sd">        Attributes modified: </span>
+<span class="sd">            *vals*, *scope*, *stride*, *card* -- Modified to reflect the data of the new product factor.</span>
+<span class="sd">                                                         </span>
+<span class="sd">        For more information cf. Koller et al. 359.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">TableCPDFactor</span><span class="p">)):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Error: in method &#39;multiplyfactor&#39;, input was not a TableCPDFactor instance&quot;</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        
+        <span class="c"># merge scopes</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scope</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">card</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">scope</span><span class="p">)):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">scope</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+            <span class="k">except</span><span class="p">:</span> 
+                <span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">scope</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+                <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+    
+        <span class="c"># calculate possible combinations of scope variables</span>
+        <span class="n">possiblevals</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">]:</span>
+            <span class="n">possiblevals</span> <span class="o">*=</span> <span class="n">val</span>
+        
+        <span class="c"># algorithm (see book)</span>
+        <span class="n">assignment</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">]))]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&quot;vals&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">possiblevals</span><span class="p">):</span>
+            <span class="n">result</span><span class="p">[</span><span class="s">&quot;vals&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">])):</span>
+                <span class="n">assignment</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">assignment</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">assignment</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">==</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">][</span><span class="n">l</span><span class="p">]):</span>
+                    <span class="n">assignment</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">j</span> <span class="o">=</span> <span class="n">j</span> <span class="o">-</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">][</span><span class="n">l</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">][</span><span class="n">l</span><span class="p">]]</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="k">pass</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">k</span> <span class="o">=</span> <span class="n">k</span> <span class="o">-</span> <span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">][</span><span class="n">l</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">][</span><span class="n">l</span><span class="p">]]</span>
+                    <span class="k">except</span><span class="p">:</span> 
+                        <span class="k">pass</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span> 
+                        <span class="n">j</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">][</span><span class="n">l</span><span class="p">]]</span>
+                    <span class="k">except</span><span class="p">:</span> 
+                        <span class="k">pass</span>
+                    <span class="k">try</span><span class="p">:</span> 
+                        <span class="n">k</span> <span class="o">=</span> <span class="n">k</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">][</span><span class="n">l</span><span class="p">]]</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="k">pass</span>
+                    <span class="k">break</span>
+            
+        <span class="c"># add strides</span>
+        <span class="n">stride</span> <span class="o">=</span> <span class="mi">1</span> 
+        <span class="n">result</span><span class="p">[</span><span class="s">&quot;stride&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">])):</span>
+            <span class="n">result</span><span class="p">[</span><span class="s">&quot;stride&quot;</span><span class="p">][</span><span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">stride</span><span class="p">)</span>
+            <span class="n">stride</span> <span class="o">*=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">][</span><span class="n">x</span><span class="p">]</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">vals</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;vals&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scope</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;scope&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">card</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;card&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s">&quot;stride&quot;</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="TableCPDFactor.sumout"><a class="viewcode-back" href="../../tablecpdfactor.html#libpgm.tablecpdfactor.TableCPDFactor.sumout">[docs]</a>    <span class="k">def</span> <span class="nf">sumout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vertex</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sum out the variable specified by *vertex* from the factor. Summing out means summing all sets of entries together where *vertex* is the only variable changing in the set. Then *vertex* is removed from the scope of the factor.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *vertex* -- The name of the variable to be summed out.</span>
+<span class="sd">        </span>
+<span class="sd">        Attributes modified: </span>
+<span class="sd">            *vals*, *scope*, *stride*, *card* -- Modified to reflect the data of the summed-out product factor.</span>
+<span class="sd">        </span>
+<span class="sd">        For more information see Koller et al. 297.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Error: in method &#39;sumout&#39;, vertex &#39;</span><span class="si">%s</span><span class="s">&#39; not in scope of factor&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">vscope</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+        <span class="n">vstride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">vertex</span><span class="p">]</span>
+        <span class="n">vcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">vscope</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">vscope</span><span class="p">])]</span>
+        
+        <span class="c"># machinery that calculates values in summed out factor</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">lcardproduct</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vscope</span><span class="p">):</span>
+            <span class="n">lcardproduct</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vcard</span><span class="p">):</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="p">(</span><span class="n">vstride</span> <span class="o">*</span> <span class="n">h</span><span class="p">)]</span>
+            <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="o">%</span> <span class="n">lcardproduct</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="p">(</span><span class="n">lcardproduct</span> <span class="o">*</span> <span class="p">(</span><span class="n">vcard</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vals</span> <span class="o">=</span> <span class="n">result</span>
+        
+        <span class="c"># modify scope, card, and stride in new factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+        <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">vscope</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vscope</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">/=</span> <span class="n">vcard</span>
+        <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">vertex</span><span class="p">])</span>
+        </div>
+<div class="viewcode-block" id="TableCPDFactor.reducefactor"><a class="viewcode-back" href="../../tablecpdfactor.html#libpgm.tablecpdfactor.TableCPDFactor.reducefactor">[docs]</a>    <span class="k">def</span> <span class="nf">reducefactor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vertex</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Reduce the factor knowing that *vertex* equals *value*. Reducing the factor means erasing all possibilities for *vertex* other than *value* from the distribution, and removing *vertex* from the scope.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            1. *vertex* -- The UUID of the variable whose outcome is known.</span>
+<span class="sd">            2. *value* -- The known outcome of that variable.</span>
+<span class="sd">        </span>
+<span class="sd">        Attributes modified: </span>
+<span class="sd">            *vals*, *scope*, *stride*, *card* -- Modified to reflect the data of the reduced factor.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">vscope</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+        <span class="n">vstride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">vertex</span><span class="p">]</span>
+        <span class="n">vcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">vscope</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">vscope</span><span class="p">])]</span>
+        
+        <span class="c"># added step: find value index from evidence</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputbn</span><span class="o">.</span><span class="n">Vdata</span><span class="p">[</span><span class="n">vertex</span><span class="p">][</span><span class="s">&#39;vals&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">,</span> <span class="s">&quot;Second arg was not a possible value of first arg.&quot;</span>
+     
+        <span class="c"># machinery that calculates values in summed out factor</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">lcardproduct</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vscope</span><span class="p">):</span>
+            <span class="n">lcardproduct</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)):</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="p">(</span><span class="n">vstride</span> <span class="o">*</span> <span class="n">index</span><span class="p">)]</span>
+            <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="o">%</span> <span class="n">lcardproduct</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">k</span> <span class="o">+=</span> <span class="p">(</span><span class="n">lcardproduct</span> <span class="o">*</span> <span class="p">(</span><span class="n">vcard</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vals</span> <span class="o">=</span> <span class="n">result</span>
+        
+        <span class="c"># modify scope, card, and stride in new factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">vertex</span><span class="p">)</span>
+        <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[</span><span class="n">vscope</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vscope</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">/=</span> <span class="n">vcard</span>
+        <span class="k">del</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="n">vertex</span><span class="p">])</span>
+    </div>
+<div class="viewcode-block" id="TableCPDFactor.copy"><a class="viewcode-back" href="../../tablecpdfactor.html#libpgm.tablecpdfactor.TableCPDFactor.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return a copy of the factor.&#39;&#39;&#39;</span>
+        <span class="n">copy</span> <span class="o">=</span> <span class="n">TableCPDFactor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputvertex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputbn</span><span class="p">)</span>
+        <span class="n">copy</span><span class="o">.</span><span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">[:]</span>
+        <span class="n">copy</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">copy</span><span class="o">.</span><span class="n">scope</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="p">[:]</span>
+        <span class="n">copy</span><span class="o">.</span><span class="n">card</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">card</span><span class="p">[:]</span>
+        <span class="k">return</span> <span class="n">copy</span>
+    
+        
+    </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">libpgm 1.1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, CyberPoint International, LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
