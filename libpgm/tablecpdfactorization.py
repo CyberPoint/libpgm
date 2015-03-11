@@ -280,7 +280,7 @@ class TableCPDFactorization():
                 newindex = index + rindices[var][x] * self.factorlist.stride[var]
                 if (visited.values().count(False) > 0):
                     i = visited.values().index(False)
-                    nextvar = query.keys()[i]
+                    nextvar = visited.keys()[i]
                     findentry(nextvar, newindex)
                 else:
                     findices.append(newindex)
