@@ -53,7 +53,7 @@ class TableCPDFactorization():
         for vertex in bn.V:
             factor = TableCPDFactor(vertex, bn)
             self.originalfactorlist.append(factor)
-        self.factorlist = copy.copy(self.originalfactorlist)  
+        self.factorlist = copy.deepcopy(self.originalfactorlist)  
         '''A working copy of *originalfactorlist*.'''
 
         assert self.factorlist, "Factor list not properly loaded, check for an incomplete class instance as input."
@@ -63,7 +63,7 @@ class TableCPDFactorization():
         Refresh the *factorlist* attribute to equate with *originalfactorlist*. This is in effect a reset of the system, erasing any changes to *factorlist* that the program has executed.
 
         '''
-        self.factorlist = copy.copy(self.originalfactorlist)    
+        self.factorlist = copy.deepcopy(self.originalfactorlist)    
             
     def sumproducteliminatevar(self, vertex):    
         '''

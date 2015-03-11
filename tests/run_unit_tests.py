@@ -185,11 +185,14 @@ class TestTableCPDFactorization(unittest.TestCase):
         self.assertTrue(len(self.fn.originalfactorlist) == 5)
         for x in range(5):
             self.assertTrue(isinstance(self.fn.originalfactorlist[x], TableCPDFactor))
-    
+
     def test_refresh(self):
-        self.fn.refresh()
-        for x in range(5):
-            self.assertTrue(isinstance(self.fn.factorlist[x], TableCPDFactor))
+        evidence = dict(Letter='weak')
+        query = dict(Intelligence=['high'])
+        result1 = self.fn.specificquery(query, evidence)
+        self.fn.refresh() 
+        result2 = self.fn.specificquery(query, evidence)
+        self.assertEqual(result1, result2) 
                             
     def test_sumproducteliminatevar(self):
         self.fn.refresh()
