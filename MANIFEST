@@ -29,3 +29,6 @@ tests/unittestdict.txt
 tests/unittestdyndict.txt
 tests/unittesthdict.txt
 tests/unittestlgdict.txt
+utils/__init__.py
+utils/bntextutils.py
+utils/libpgmexceptions.py
