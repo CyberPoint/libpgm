@@ -6,7 +6,7 @@ from distutils.core import setup
 setup(
 
     name = 'libpgm',
-    version = '1.2',
+    version = '1.3',
     author = 'CyberPoint International, LLC',
     author_email = 'mraugas@cyberpointllc.com',
     url = 'http://www.cyberpointllc.com',
