@@ -53,7 +53,7 @@ class TableCPDFactorization():
         for vertex in bn.V:
             factor = TableCPDFactor(vertex, bn)
             self.originalfactorlist.append(factor)
-        self.factorlist = copy.copy(self.originalfactorlist)  
+        self.factorlist = copy.deepcopy(self.originalfactorlist)  
         '''A working copy of *originalfactorlist*.'''
 
         assert self.factorlist, "Factor list not properly loaded, check for an incomplete class instance as input."
@@ -63,7 +63,7 @@ class TableCPDFactorization():
         Refresh the *factorlist* attribute to equate with *originalfactorlist*. This is in effect a reset of the system, erasing any changes to *factorlist* that the program has executed.
 
         '''
-        self.factorlist = copy.copy(self.originalfactorlist)    
+        self.factorlist = copy.deepcopy(self.originalfactorlist)    
             
     def sumproducteliminatevar(self, vertex):    
         '''
@@ -259,8 +259,16 @@ class TableCPDFactorization():
 
         '''
         assert (isinstance(query, dict) and isinstance(evidence, dict)), "First and second args must be dicts."
+        assert query, "Query must be non-empty."
         
         self.condprobve(query, evidence)
+
+        # now self.factorlist contains the joint distribution across the
+        # variables designated in query. next, we have to locate the entries
+        # where the variables have values matching the query (e.g., where "Grade"
+        # is "A" and "Intelligence" is "High"). because must loop once for each 
+        # variable, and we don't know how many variables there are, we use 
+        # recursion to iterate through the variables
         visited = dict()
         rindices = dict()
         findices = []
@@ -272,7 +280,7 @@ class TableCPDFactorization():
             for poss in query[var]:
                 rindices[var].append(self.bn.Vdata[var]["vals"].index(poss))
         
-        # define function to help iterate recursively through all combinations of evidence
+        # define function to help iterate recursively through all combinations of variables
         def findentry(var, index):
             visited[var] = True 
         
@@ -280,15 +288,16 @@ class TableCPDFactorization():
                 newindex = index + rindices[var][x] * self.factorlist.stride[var]
                 if (visited.values().count(False) > 0):
                     i = visited.values().index(False)
-                    nextvar = query.keys()[i]
+                    nextvar = visited.keys()[i]
                     findentry(nextvar, newindex)
                 else:
+                    # we've accounted for all variable assignments and found an entry
                     findices.append(newindex)
             visited[var] = False
             return
         
         # calculate all relevant entries
-        findentry(query.keys()[0], 0)
+        findentry(visited.keys()[0], 0)
             
         # sum entries
         fanswer = 0
