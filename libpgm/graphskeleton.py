@@ -120,6 +120,9 @@ class GraphSkeleton(Dictionary):
         The function also checks for cycles in the graph, and returns an error if one is found.
 
         '''
+        # fix base ordering to ensure same results each time
+        self.V.sort()
+
         Ecopy = [x[:] for x in self.E]
         roots = [] 
         toporder = []
