@@ -371,7 +371,26 @@ class TestPGMLearner(unittest.TestCase):
         self.assertTrue(result.V)
         self.assertTrue(result.E)
         self.assertTrue(result.Vdata["Intelligence"]["mean_base"])
+
+        result2 = self.l.lg_estimatebn(self.samplelgseq, ret_type="best")
+        self.assertTrue(result2.V)
+        self.assertTrue(result2.E)
+        self.assertTrue(result2.Vdata["Intelligence"]["mean_base"])
         
+        result3 = self.l.lg_estimatebn(self.samplelgseq, ret_type="all")
+        self.assertTrue(isinstance(result3, list))
+        self.assertTrue(result3[0].V)
+        self.assertTrue(result3[0].E)
+        self.assertTrue(result3[0].Vdata["Intelligence"]["mean_base"])
+
+	result3_vdata = [str(x.Vdata) for x in result3]
+	result3_e = [str(x.E) for x in result3]
+
+	self.assertTrue(str(result.Vdata) in result3_vdata)
+	self.assertTrue(str(result2.Vdata) in result3_vdata)
+	self.assertTrue(str(result.E) in result3_e)
+	self.assertTrue(str(result2.E) in result3_e)
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

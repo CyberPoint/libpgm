@@ -28,6 +28,7 @@ This module provides tools to generate Bayesian networks that are "learned" from
 '''
 import copy
 import json
+import math
 import itertools
 try:
     import numpy as np
@@ -36,6 +37,7 @@ except ImportError:
 
 try: 
     from scipy.stats import chisquare
+    from scipy.stats import norm
 except ImportError:
     raise ImportError, "scipy is not installed on your system."
 
@@ -366,6 +368,8 @@ class PGMLearner():
         '''
         Learn a Bayesian network structure from discrete data given by *data*, using constraint-based approaches. This function first calculates all the independencies and conditional independencies present between variables in the data. To calculate dependencies, it uses the *discrete_condind* method on each pair of variables, conditioned on other sets of variables of size *indegree* or smaller, to generate a chi-squared result and a p-value. If this p-value is less than *pvalparam*, the pair of variables are considered dependent conditioned on the variable set. Once all true dependencies -- pairs of variables that are dependent no matter what they are conditioned by -- are found, the algorithm uses these dependencies to construct a directed acyclic graph. It returns this DAG in the form of a :doc:`GraphSkeleton <graphskeleton>` class. 
 
+        Note that the algorithm only goes as far as finding a partially directed acyclic graph -- to deterministically compute a DAG from this requires some kind of scoring function for optimization. This method returns one arbitrarily chosen DAG from the PDAG class, but also places the PDAG edge set in the attribute skel.E_undirected of the returned GraphSkeleton in case the PDAG edge set is of use to the caller. The E_undirected attribute is a list of directed and undirected edges. Undirected edges are signaled by a "u" appended to the edge (example: ["Grade", "Letter", "u"]).
+
         Arguments:
             1. *data* -- An array of dicts containing samples from the network in {vertex: value} format. Example::
 
@@ -580,14 +584,48 @@ class PGMLearner():
                                         edge1[1]))):
                                         dedges.remove(edge3)
                     
+        # record undirected edges for possible use later
+        pdag.E_undirected = dedges[:]
 
         # return one possible graph skeleton from the pdag class found
-        for x in range(len(dedges)):
-            if len(dedges[x]) == 3:
-                dedges[x] = dedges[x][:2]
+        # we have to look for one that does not have a cycle
+        # calulate number of edge direction possibilities (2^n_undirected_edges)
+        n2 = 2**len([x for x in pdag.E_undirected if len(x) == 3])
+
+        for x in range(n2):
+            newskel = GraphSkeleton()
+            newskel.V = pdag.V[:]
+            new_edges = []
+            # try each edge each way 
+            for e in pdag.E_undirected:
+                if len(e) == 2: 
+                    new_edges.append(e)
+                    continue
+                new_edge = e[:2]
+                if x % 2 == 0:
+                    new_edge.reverse()
+                new_edges.append(new_edge)
+                x = x >> 1
+            newskel.E = new_edges
+
+            try: 
+                newskel.toporder()
+            except AssertionError:
+                # this one was cyclic, try the next
+                continue
+
+            # take this edge set because it works, break the loop and proceed
+            pdag.E = newskel.E[:]
+            break 
         
-        pdag.E = dedges
-        pdag.toporder()
+        # sanity check - this should not be able to fail
+        try: 
+            pdag.toporder()
+        except:
+            print "sanity check in discrete_contraint_estimatestruct failed. topologically "\
+            "ordered graph skeleton not produced."
+            raise
+
         return pdag
 
     def lg_constraint_estimatestruct(self, data, pvalparam=0.05, bins=10, indegree=1):
@@ -890,7 +928,7 @@ class PGMLearner():
         # return
         return bn
 
-    def lg_estimatebn(self, data, pvalparam=.05, bins=10, indegree=1):
+    def lg_estimatebn(self, data, pvalparam=.05, bins=10, indegree=1, ret_type="one"):
         '''
         Fully learn a Bayesian network from linear Gaussian data given by *data*. This function combines the *lg_constraint_estimatestruct* method (where it passes in the *pvalparam*, *bins*, and *indegree* arguments) with the *lg_mle_estimateparams* method. It returns a complete :doc:`LGBayesianNetwork <discretebayesiannetwork>` class instance learned from the data.
 
@@ -906,7 +944,9 @@ class PGMLearner():
                         ...
                     ]
             2. *pvalparam* -- The p-value below which to consider something significantly unlikely. A common number used is 0.05
-            3. *indegree* -- The upper bound on the size of a witness set (see Koller et al. 85). If this is larger than 1, a huge amount of trials are required to avoid a divide-by- zero error.
+            3. *bins* -- (Optional, default is 10) The number of bins to discretize the data into. The method is to find the highest and lowest value, divide that interval uniformly into a certain number of bins, and place the data inside. This number must be chosen carefully in light of the number of trials. There must be at least 5 trials in every bin, with more if the indegree is increased.
+            4. *indegree* -- The upper bound on the size of a witness set (see Koller et al. 85). If this is larger than 1, a huge amount of trials are required to avoid a divide-by- zero error.
+            5. *ret_type* -- (one|all|best) There are a number of DAGs that are possible when learning from data. Specify whether you want the BN trained from one of these DAGs (chosen arbitrarily), you want a list of all of them, or you want the best (this option is computationally expensive). If "best" is chosen, the model that best fits the data will be chosen through the method of maximum likelihood.
 
         Usage example: this would learn entire Bayesian networks from sets of 8000 data points::
 
@@ -966,10 +1006,80 @@ class PGMLearner():
         # learn graph skeleton
         skel = self.lg_constraint_estimatestruct(data, pvalparam=pvalparam, bins=bins, indegree=indegree)
 
-        # learn parameters
-        bn = self.lg_mle_estimateparams(skel, data)
+        if ret_type == "one":
 
-        # return
-        return bn
+            # estimate parameters
+            bn = self.lg_mle_estimateparams(skel, data)
+            return bn
 
+        elif ret_type == "all" or ret_type == "best":
+            # try all possible combinations of edge directions
+            n2 = 2**len([x for x in skel.E_undirected if len(x) == 3])
 
+            bns = []
+
+            for x in range(n2):
+                newskel = GraphSkeleton()
+                newskel.V = skel.V[:]
+                new_edges = []
+                # try each edge each way 
+                for e in skel.E_undirected:
+                    if len(e) == 2: 
+                        new_edges.append(e)
+                        continue
+                    new_edge = e[:2]
+                    if x % 2 == 0:
+                        new_edge.reverse()
+                    new_edges.append(new_edge)
+                    x = x >> 1
+                newskel.E = new_edges
+
+                try: 
+                    newskel.toporder()
+                except AssertionError:
+                    # cyclic, so don't include 
+                    continue
+
+                # learn parameters
+                bn = self.lg_mle_estimateparams(newskel, data)
+                bns.append(bn)
+            
+            if ret_type == "all":
+                return bns
+            else:       # ret_type == "best"
+
+                # calculate likelihood of data given each bn
+                likelihoods = [0.0 for _ in bns]
+                for bnx in range(len(bns)):
+                    bn = bns[bnx]
+                    for datum in data:
+                        for x in range(len(bn.V)):
+
+                            # calculate mean and variance
+                            s = bn.V[x]
+                            mean = bn.Vdata[s]["mean_base"]
+                            if (bn.Vdata[s]["parents"] != None):
+                                for x in range(len(bn.Vdata[s]["parents"])):
+                                    parent = bn.Vdata[s]["parents"][x]
+                                    mean += datum[parent] * bn.Vdata[s]["mean_scal"][x]
+                            variance = bn.Vdata[s]["variance"]
+
+                            distro = norm(loc=mean, scale=variance)
+                            try: 
+                                p = distro.pdf(datum[s])
+                            except ValueError as e:
+                                print "distro.pdf unable to execute with error %s, using p = 0.0" % str(e)
+                                p = 0.0
+
+                            if p > 0:
+                                l = math.log(p)
+                            else:
+                                # use high number instead of trying to compute log(0)
+                                l = -1000000000
+                            likelihoods[bnx] += l
+                            
+                # find one with highest likelihood and return it
+                best_index = likelihoods.index(max(likelihoods))
+                return bns[best_index]
+        else:
+            print "Unrecognized ret_type parameter '%s'" % ret_type
