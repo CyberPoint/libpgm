@@ -1064,7 +1064,7 @@ class PGMLearner():
                                     mean += datum[parent] * bn.Vdata[s]["mean_scal"][x]
                             variance = bn.Vdata[s]["variance"]
 
-                            distro = norm(loc=mean, scale=variance)
+                            distro = norm(loc=mean, scale=math.sqrt(variance))
                             try: 
                                 p = distro.pdf(datum[s])
                             except ValueError as e:
