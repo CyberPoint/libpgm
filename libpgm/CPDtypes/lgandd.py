@@ -1,6 +1,6 @@
 # Copyright (c) 2012, CyberPoint International, LLC
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #     * Redistributions of source code must retain the above copyright
@@ -11,7 +11,7 @@
 #     * Neither the name of the CyberPoint International, LLC nor the
 #       names of its contributors may be used to endorse or promote products
 #       derived from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -43,7 +43,7 @@ class Lgandd():
                                 "mean_base": <float used for mean starting point
                                               (\mu_0)>,
                                 "mean_scal": <array of scalars by which to
-                                              multiply respectively ordered 
+                                              multiply respectively ordered
                                               continuous parent outcomes>,
                                 "variance": <float for variance>
                             }
@@ -52,7 +52,7 @@ class Lgandd():
                                 "mean_base": <float used for mean starting point
                                               (\mu_0)>,
                                 "mean_scal": <array of scalars by which to
-                                              multiply respectively ordered 
+                                              multiply respectively ordered
                                               continuous parent outcomes>,
                                 "variance": <float for variance>
                             }
@@ -88,14 +88,10 @@ class Lgandd():
                 dispvals.append(pval)
             else:
                 lgpvals.append(pval)
-      
 
-        # error check
-        try: 
-            a = dispvals[0]
-            a = lgpvals[0]
-        except IndexError:
-            print "Did not find LG and discrete type parents."
+        # Check that we have at least one discrete parent.
+        if not dispvals:
+            print "Did not find any discrete parent. Consider using an Lg node."
 
         # find correct Gaussian
         lgdistribution = self.Vdataentry["hybcprob"][str(dispvals)]
@@ -108,10 +104,10 @@ class Lgandd():
                     mean += lgpvals[x] * lgdistribution["mean_scal"][x]
                 else:
 
-                    # temporary error check 
+                    # temporary error check
                     print "Attempted to sample node with unassigned parents."
 
         variance = lgdistribution["variance"]
 
         # draw random outcome from Gaussian (I love python)
-        return random.gauss(mean, math.sqrt(variance))          
+        return random.gauss(mean, math.sqrt(variance))
