@@ -89,9 +89,13 @@ class Lgandd():
             else:
                 lgpvals.append(pval)
 
-        # Check that we have at least one discrete parent.
-        if not dispvals:
-            print "Did not find any discrete parent. Consider using an Lg node."
+
+        # error check
+        try:
+            a = dispvals[0]
+            a = lgpvals[0]
+        except IndexError:
+            print "Did not find LG and discrete type parents."
 
         # find correct Gaussian
         lgdistribution = self.Vdataentry["hybcprob"][str(dispvals)]
