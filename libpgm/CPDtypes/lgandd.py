@@ -23,7 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
-This module contains tools for representing "LG + D" (linear Gaussian and discrete) nodes -- those with a Gaussian distribution, one or more Gaussian parents, and one or more discrete parents -- as class instances with their own *choose* method to choose an outcome for themselves based on parent outcomes.
+This module contains tools for representing "LG + D" (linear Gaussian and discrete) nodes -- those with a Gaussian distribution, zero or more Gaussian parents, and one or more discrete parents -- as class instances with their own *choose* method to choose an outcome for themselves based on parent outcomes.
 
 '''
 import random
@@ -36,7 +36,7 @@ class Lgandd():
     '''
     def __init__(self, Vdataentry):
         '''
-        This class is constructed with the argument *Vdataentry* which must be a dict containing a dictionary entry for this particualr node. The dict must contain an entry of the following form::
+        This class is constructed with the argument *Vdataentry* which must be a dict containing a dictionary entry for this particular node. The dict must contain an entry of the following form::
 
             "cprob": {
                 "['<parent 1, value 1>',...,'<parent n, value 1>']": {
@@ -90,12 +90,9 @@ class Lgandd():
                 lgpvals.append(pval)
 
 
-        # error check
-        try:
-            a = dispvals[0]
-            a = lgpvals[0]
-        except IndexError:
-            print "Did not find LG and discrete type parents."
+        # Check that we have at least one discrete parent.
+        if not dispvals:
+            print "Did not find any discrete parent. Consider using an Lg node."
 
         # find correct Gaussian
         lgdistribution = self.Vdataentry["hybcprob"][str(dispvals)]
