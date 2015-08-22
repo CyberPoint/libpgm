@@ -292,23 +292,6 @@ class TestHyBayesianNetwork(unittest.TestCase):
         self.assertTrue(isinstance(sample['Intelligence'], str))
         self.assertEqual(sample["SAT"][-12:], 'blueberries!')
 
-class TestHyBayesianNetworkLganddNoLgParents(unittest.TestCase):
-
-    def setUp(self):
-        self.nd = NodeData()
-        self.nd.load("unittesthdict_lgandd_no_lg_parents.txt")
-        self.nd.entriestoinstances()
-        self.skel = GraphSkeleton()
-        self.skel.load("unittesthdict_lgandd_no_lg_parents.txt")
-        self.skel.toporder()
-        self.hybn = HyBayesianNetwork(self.skel, self.nd)
-
-    def test_randomsample(self):
-        sample = self.hybn.randomsample(1)[0]
-        self.assertTrue(isinstance(sample['Grade'], float))
-        self.assertTrue(isinstance(sample['Intelligence'], str))
-        self.assertEqual(sample["SAT"][-12:], 'blueberries!')
-
 class TestDynDiscBayesianNetwork(unittest.TestCase):
 
     def setUp(self):
