@@ -121,7 +121,7 @@ class TableCPDFactorization():
         
         self.factorlist = self.factorlist[0]
         
-    def condprobve(self, query, evidence):
+    def condprobve(self, query, evidence=None):
         '''
         Eliminate all variables in *factorlist* except for the ones queried. Adjust all distributions for the evidence given. Return the probability distribution over a set of variables given by the keys of *query* given *evidence*. 
         
@@ -172,10 +172,16 @@ class TableCPDFactorization():
             print json.dumps(result.stride, indent=2)
 
         '''
-        assert (isinstance(query, dict) and isinstance(evidence, dict)), "First and second args must be dicts."
+        if isinstance(query,dict):
+            query = {k for k in query.keys()}
+
+        if evidence is None:
+            evidence = {}
+
+        assert (isinstance(query, set) and isinstance(evidence, dict)), "First and second args must be dicts."
 
         eliminate = self.bn.V[:]
-        for key in query.keys():
+        for key in query:
             eliminate.remove(key)
         for key in evidence.keys():
             eliminate.remove(key)
@@ -203,7 +209,7 @@ class TableCPDFactorization():
         # return table
         return self.factorlist
 
-    def specificquery(self, query, evidence):
+    def specificquery(self, query, evidence=None):
         '''
         Eliminate all variables except for the ones specified by *query*. Adjust all distributions to reflect *evidence*. Return the entry that matches the exact probability of a specific event, as specified by *query*.
         
@@ -258,6 +264,8 @@ class TableCPDFactorization():
             print result
 
         '''
+        if evidence is None:
+            evidence = {}
         assert (isinstance(query, dict) and isinstance(evidence, dict)), "First and second args must be dicts."
         assert query, "Query must be non-empty."
         
