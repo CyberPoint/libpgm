@@ -78,7 +78,7 @@ class Lgandd():
         The function goes to the entry of ``"cprob"`` that matches the outcomes of its discrete parents. Then, it constructs a Gaussian distribution based on its Gaussian parents and the parameters found at that entry. Last, it samples from that distribution and returns its outcome.
 
         '''
-        random.seed()
+
 
         # split parents by type
         dispvals = []

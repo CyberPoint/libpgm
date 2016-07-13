@@ -67,7 +67,7 @@ class Lg():
         The function creates a Gaussian distribution in the manner described in :doc:`lgbayesiannetwork`, and samples from that distribution, returning its outcome.
         
         '''
-        random.seed()
+
 
         # calculate Bayesian parameters (mean and variance)
         mean = self.Vdataentry["mean_base"]

@@ -128,7 +128,7 @@ class LGBayesianNetwork(OrderedSkeleton):
         '''
         assert (isinstance(n, int) and n > 0), "Argument must be a positive integer."
 
-        random.seed()
+
         seq = []
         distribseq = []
         for _ in range(n):

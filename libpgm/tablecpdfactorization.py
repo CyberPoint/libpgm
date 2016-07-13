@@ -356,7 +356,7 @@ class TableCPDFactorization():
 
         '''
         self.refresh()
-        random.seed() 
+
         
         # declare result array
         seq = []

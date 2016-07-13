@@ -129,7 +129,7 @@ class DynDiscBayesianNetwork(OrderedSkeleton):
         '''
         assert (isinstance(n, int) and n > 0), "Argument must be a positive integer."
 
-        random.seed()
+
         seq = []
         for t in range(n):
             outcome = dict()

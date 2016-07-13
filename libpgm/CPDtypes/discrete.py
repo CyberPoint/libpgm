@@ -62,7 +62,7 @@ class Discrete():
         The function goes to the proper entry in *Vdataentry*, as specified by *pvalues*, and samples the node based on the distribution found there. 
 
         '''
-        random.seed()
+
 
         p = self.Vdataentry["parents"]
         if (not p):

@@ -179,7 +179,7 @@ class DiscreteBayesianNetwork(OrderedSkeleton):
         '''
         assert (isinstance(n, int) and n > 0), "Argument must be a positive integer."
         
-        random.seed()
+
         seq = []
         for _ in range(n):
             outcome = dict()
