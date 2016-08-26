@@ -32,8 +32,8 @@ import json
 import sys
 from utils.libpgmexceptions import *
 import utils.bntextutils as bntutils
-from .orderedskeleton import OrderedSkeleton
-from .tablecpdfactorization import TableCPDFactorization
+from orderedskeleton import OrderedSkeleton
+from tablecpdfactorization import TableCPDFactorization
 
 class DiscreteBayesianNetwork(OrderedSkeleton):
     '''
@@ -84,7 +84,8 @@ class DiscreteBayesianNetwork(OrderedSkeleton):
     
                 '''
             except:
-                raise Exception("Inputs were malformed; first arg must contain V and E attributes and second arg must contain Vdata attribute.")
+                raise Exception, "Inputs were malformed; first arg must contain V and E attributes and second arg must contain Vdata attribute."
+
             # check that inputs match up
             assert (sorted(self.V) == sorted(self.Vdata.keys())), ("Vertices did not match vertex data:", self.V, self.Vdata.keys())
 
@@ -202,13 +203,9 @@ class DiscreteBayesianNetwork(OrderedSkeleton):
                     pvalues = [str(outcome[t]) for t in Vdataentry["parents"]] # ideally can we pull this from the skeleton so as not to store parent data at all?
                     for pvalue in pvalues:
                         assert pvalue != 'default', "Graph skeleton was not topologically ordered."
-                        key = str(pvalues)
-                        try:
-                            distribution = Vdataentry["cprob"][key]
-                        except KeyError:
-                            key = key.replace(" ","  ")
-                            distribution = Vdataentry["cprob"][key]
-                            
+                       
+                    distribution = Vdataentry["cprob"][str(pvalues)]
+
                 # choose interval
                 rand = random.random()
                 lbound = 0 

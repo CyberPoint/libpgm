@@ -29,7 +29,7 @@ This module provides tools to represent and handle dynamic Bayesian networks wit
 
 import random
 import sys
-from .orderedskeleton import OrderedSkeleton
+from orderedskeleton import OrderedSkeleton
 
 class DynDiscBayesianNetwork(OrderedSkeleton):
     '''
@@ -86,7 +86,7 @@ class DynDiscBayesianNetwork(OrderedSkeleton):
                 self.twotbn_Vdata = nodedata.twotbn_Vdata
                 '''A dictionary containing CPD data for the Bayesian network for time intervals greater than 0.'''
             except:
-                raise Exception("Inputs were malformed; first arg must contain V and E attributes and second arg must contain initial_Vdata and twotbn_Vdata attributes.")
+                raise Exception, "Inputs were malformed; first arg must contain V and E attributes and second arg must contain initial_Vdata and twotbn_Vdata attributes."
 
             # check that inputs match up
             assert (sorted(self.V) == sorted(self.initial_Vdata.keys())), ("initial_Vdata vertices did not match vertex data:", self.V, self.Vdata.keys())
@@ -158,12 +158,8 @@ class DynDiscBayesianNetwork(OrderedSkeleton):
                             pvalues.append(str(outcome[parent]))
                     for pvalue in pvalues:
                         assert pvalue != 'default', "Graph skeleton was not topologically ordered."
-                    key = str(pvalues)
-                    try:
-                        distribution = Vdataentry["cprob"][key]
-                    except KeyError:
-                        key = key.replace(" ","  ")
-                        distribution = Vdataentry["cprob"][key]
+                       
+                    distribution = Vdataentry["cprob"][str(pvalues)]
 
                 # choose interval
                 rand = random.random()

@@ -26,7 +26,7 @@
 This module provides tools for creating and using graph skeletons for Bayesian networks. A graph skeleton in this case is a vertex set and a directed edge set, with no further information about the specific nodes. 
 
 '''
-from .dictionary import Dictionary
+from dictionary import Dictionary
 
 import sys
 

@@ -91,7 +91,7 @@ class SampleAggregator(object):
         for key in seq[0].keys():
             output[key] = dict()
             for trial in seq:
-                keyss = list(output[key].keys())
+                keyss = output[key].keys()
                 vall = trial[key]
                 if (keyss.count(vall) > 0):
                     output[key][trial[key]] += 1

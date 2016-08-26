@@ -27,7 +27,7 @@ This module facilitates the process of creating ordered graph skeletons by topol
 
 '''
 
-from .graphskeleton import GraphSkeleton
+from graphskeleton import GraphSkeleton
 
 class OrderedSkeleton(GraphSkeleton):
     '''

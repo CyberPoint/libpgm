@@ -27,7 +27,7 @@ This module provides tools for creating and using factorized representations of 
 
 '''
 
-from .tablecpdfactor import TableCPDFactor
+from tablecpdfactor import TableCPDFactor
 
 import random
 import copy
@@ -294,9 +294,9 @@ class TableCPDFactorization():
         
             for x in range(len(rindices[var])):
                 newindex = index + rindices[var][x] * self.factorlist.stride[var]
-                if (list(visited.values()).count(False) > 0):
-                    i = list(visited.values()).index(False)
-                    nextvar = list(visited.keys())[i]
+                if (visited.values().count(False) > 0):
+                    i = visited.values().index(False)
+                    nextvar = visited.keys()[i]
                     findentry(nextvar, newindex)
                 else:
                     # we've accounted for all variable assignments and found an entry
@@ -305,7 +305,7 @@ class TableCPDFactorization():
             return
         
         # calculate all relevant entries
-        findentry(list(visited.keys())[0], 0)
+        findentry(visited.keys()[0], 0)
             
         # sum entries
         fanswer = 0
@@ -391,9 +391,6 @@ class TableCPDFactorization():
                     del(self.factorlist[x])
                     
         # define function to create the next instantiation
-        # this feels very odd, why would you define a function inside another function
-        # it also seems like very bad practice to instantiate a list outside of the function and then use it
-        # in the funcion!
         def next(current): 
             for node in order:
                 # multiply all relevant factors together
@@ -409,17 +406,14 @@ class TableCPDFactorization():
                 for othernode in order:
                     if (othernode != node and relevantfactors[0].scope.count(othernode) > 0):
                         relevantfactors[0].reducefactor(othernode, current[othernode])
-
-                if not all([val==0 for val in relevantfactors[0].vals]):
-                #if not all relevantfactors[0].vals equal zero
-                #if they do all equal 0, no reason to renormalize
-                    # renormalize
-                    summ = 0
-                    for val in relevantfactors[0].vals:
-                        summ += val
-                    for x in range(len(relevantfactors[0].vals)):
-                        relevantfactors[0].vals[x] /= summ
-
+                
+                # renormalize
+                summ = 0
+                for val in relevantfactors[0].vals:
+                    summ += val
+                for x in range(len(relevantfactors[0].vals)):
+                    relevantfactors[0].vals[x] /= summ
+                
                 # convert random number
                 val = random.random()
                 lboundary = 0
@@ -432,12 +426,10 @@ class TableCPDFactorization():
                         break
                     else:
                         lboundary = uboundary 
-                try:
-                    # modify result
-                    current[node] = self.bn.Vdata[node]["vals"][rindex]
-                except UnboundLocalError:
-                    current[node] = self.bn.Vdata[node]["vals"][x]
-                    #I have no idea if this is the correct thing to do
+                
+                # modify result
+                current[node] = self.bn.Vdata[node]["vals"][rindex]
+   
             return current
                         
         # run next() function n times

@@ -76,7 +76,7 @@ class Lg():
                 if (pvalues[x] != "default"):
                     mean += pvalues[x] * self.Vdataentry["mean_scal"][x]
                 else:
-                    print("Attempted to sample node with unassigned parents.")
+                    print "Attempted to sample node with unassigned parents."
 
         variance = self.Vdataentry["variance"]
 

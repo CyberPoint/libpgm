@@ -71,14 +71,14 @@ class Dictionary(object):
 
         if not loaded:
             try: 
-                ftext = ftext.translate('\t\n ')
+                ftext = ftext.translate(None, '\t\n ')
                 ftext = ftext.replace(':', ': ')
                 ftext = ftext.replace(',', ', ')
                 ftext = ftext.replace('None', 'null')
                 ftext = ftext.replace('.', '0.')
                 self.alldata = json.loads(ftext)
             except ValueError:
-                raise ValueError("Convert to JSON from input file failed. Check formatting.")
+                raise ValueError, "Convert to JSON from input file failed. Check formatting."
         f.close()
         
         assert isinstance(self.alldata, dict), "In method dictload, path did not direct to a proper text file."

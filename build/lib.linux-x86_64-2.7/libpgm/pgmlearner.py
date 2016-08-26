@@ -32,18 +32,18 @@ import itertools
 try:
     import numpy as np
 except ImportError:
-    raise ImportError("numpy is not installed on your system.")
+    raise ImportError, "numpy is not installed on your system."
 
 try: 
     from scipy.stats import chisquare
 except ImportError:
-    raise ImportError("scipy is not installed on your system.")
+    raise ImportError, "scipy is not installed on your system."
 
 
-from .graphskeleton import GraphSkeleton
-from .discretebayesiannetwork import DiscreteBayesianNetwork
-from .lgbayesiannetwork import LGBayesianNetwork
-from .sampleaggregator import SampleAggregator
+from graphskeleton import GraphSkeleton
+from discretebayesiannetwork import DiscreteBayesianNetwork
+from lgbayesiannetwork import LGBayesianNetwork
+from sampleaggregator import SampleAggregator
 
 class PGMLearner():
     '''
@@ -412,7 +412,7 @@ class PGMLearner():
         assert (isinstance(data, list) and data and isinstance(data[0], dict)), "Arg must be a list of dicts."
 
         # instantiate array of variables and array of potential dependencies
-        variables = list(data[0].keys())
+        variables = data[0].keys()
         ovariables = variables[:]
         dependencies = []
         for x in variables:

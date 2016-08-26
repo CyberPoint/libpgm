@@ -23,28 +23,21 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '''
-This module provides tools to represent and handle Bayesian networks with linear Gaussian conditional probability distributions.
+This module provides tools to represent and handle Bayesian networks with conditional probability distributions that can be specified node-by-node. 
 
-A linear Gaussian distribution means that the node has a continuous range of outcomes, with a normal distribution over those outcomes. This normal distribution can be parameterized by a *mean* and a *variance*. A linear Gaussian means that the variance of the node is fixed, while the mean is a linear function of the outcomes of the node's parents. In math terms, the mean :math:`m(u)` of a node *u* is a linear function of the values :math:`x_1,\\dots,x_n` of its parents, each weighted by some coefficient :math:`\\beta_i`:
-
-.. math::
-
-    m(u) = \\beta_0 +\\beta_1 x_1 + \\dots + \\beta_n x_n
-
-Linear Gaussians are simple but widely used in statistical modeling.
+This method allows for the construction of a Bayesian network with every combination of every type of CPD, provided that the user provides a method for sampling each type of node and stores this method in the proper place, namely as the ``choose()`` method of a class in ``libpgm.CPDtypes/``.
 
 '''
 
 import random
-import math
 import sys
 
-from .orderedskeleton import OrderedSkeleton
+from orderedskeleton import OrderedSkeleton
 
-class LGBayesianNetwork(OrderedSkeleton):
+class HyBayesianNetwork(OrderedSkeleton):
     '''
-    This class represents a Bayesian network with linear Gaussian CPDs. It contains the attributes *V*, *E*, and *Vdata*, as well as the method *randomsample*. 
-   
+    This class represents a Bayesian network with CPDs of any type. The nodes of the Bayesian network are stored first in a dictionary, specifying their "type", which should be descriptive ('discrete', 'lg', etc.). Furthermore, the types of each node associate them with a class found in ``libpgm/CPDtypes/``. The nodes are then stored also as instances of classes found in this directory. The purpose of this is that each node has its own method for being sampled given the outcomes of its parents.
+    
     '''
 
     def __init__(self, orderedskeleton=None, nodedata=None):
@@ -53,20 +46,10 @@ class LGBayesianNetwork(OrderedSkeleton):
 
             1. *orderedskeleton* -- An instance of the :doc:`OrderedSkeleton <orderedskeleton>` or :doc:`GraphSkeleton <graphskeleton>` (as long as it's ordered) class.
             2. *nodedata* -- An instance of the :doc:`NodeData <nodedata>` class.
-
-        If these arguments are present, all attributes of the class (*V*, *E*, and *Vdata*) will be automatically copied from the graph skeleton and node data inputs.
         
-        This class requires that the *Vdata* attribute gets loaded with a dictionary with node data of the following fomat::
+        It is required that the *nodedata* class instance inputted has its *nodes* attribute instantiated. In order for this to be the case, the instance must have run its *entriestoinstances* method.
 
-            "vertex": {
-                "parents": ["<name of parent 1>", ... , "<name of parent n>"],
-                "children": ["<name of child 1>", ... , "<name of child n>"],   
-                "mean_base": <the base mean of the Gaussian distribution>,
-                "mean_scal": [<scalar for parent 1 outcome>, ... , <scalar for parent n outcome>],
-                "variance": <variance of the Gaussian distibution>
-            }
-
-        Note that additional keys are possible in the dict of each vertex.
+        If the arguments above are present, all attributes of the class (*V*, *E*, *Vdata*, and *nodes*) will be automatically copied from the graph skeleton and node data inputs.
 
         Upon loading, the class will also check that the keys of *Vdata* correspond to the vertices in *V*.
 
@@ -79,99 +62,92 @@ class LGBayesianNetwork(OrderedSkeleton):
                 '''A list of [origin, destination] pairs of vertices that make edges.'''
                 self.Vdata = nodedata.Vdata
                 '''A dictionary containing CPD data for the nodes.'''
-            except: 
-                raise Exception("Inputs were malformed; first arg must contain V and E attributes and second arg must contain Vdata attribute.")
+            
+                # specific to hybrid Bayesian network
+                self.nodes = nodedata.nodes
+                '''A dictionary of {key: value} pairs linking the node name (the key) to a class instance (the value) representing the node, its node data, and its sampling function.'''
+            except:
+                raise Exception, "Inputs were malformed; first arg must contain V and E attributes and second arg must contain Vdata and nodes attributes."
 
-            assert sorted(self.V) == sorted(self.Vdata.keys()), "Vertices did not match node data"
-
-    def randomsample(self, n, evidence=None, mode="normal"):
+            # check that inputs match up
+            assert sorted(self.V) == sorted(self.Vdata.keys()), "Node data did not match graph skeleton nodes."
+    
+    def randomsample(self, n, evidence=None):
         '''
-        Produce *n* random samples from the Bayesian Network and return them in a list. 
-       
-        See above for how the means of linear Gaussians are calculated during sampling.
-
+        Produce *n* random samples from the Bayesian networki, subject to *evidence*, and return them in a list. This function requires the *nodes* attribute to be instantiated.
+        
         This function takes the following arguments:
 
             1. *n* -- The number of random samples to produce.
             2. *evidence* -- (Optional) A dict containing (vertex: value) pairs that describe the evidence. To be used carefully because it does manually overrides the nodes with evidence instead of affecting the joint probability distribution of the entire graph.
-            3. *mode* -- (Optional) Can be set to "verbose", whereupon the method will return a [value, mean, variance] list for each node rather than just the actual value.  
         
         And returns:
             A list of *n* independent random samples, each element of which is a dict containing (vertex: value) pairs.
-
+        
         Usage example: this would generate a sequence of 10 random samples::
             
             import json
 
             from libpgm.nodedata import NodeData
             from libpgm.graphskeleton import GraphSkeleton
-            from libpgm.lgbayesiannetwork import LGBayesianNetwork
+            from libpgm.hybayesiannetwork import HyBayesianNetwork
 
             # load nodedata and graphskeleton
             nd = NodeData()
             skel = GraphSkeleton()
-            nd.load("../tests/unittestlgdict.txt")  # an input file
+            nd.load("../tests/unittesthdict.txt")   # an input file
             skel.load("../tests/unittestdict.txt")
 
             # topologically order graphskeleton
             skel.toporder()
 
+            # convert nodes to class instances
+            nd.entriestoinstances()
+
             # load bayesian network
-            lgbn = LGBayesianNetwork(skel, nd)
+            hybn = HyBayesianNetwork(skel, nd)
 
             # sample 
-            result = lgbn.randomsample(10)
+            result = hybn.randomsample(10)
 
             # output
             print json.dumps(result, indent=2)
+            
+
 
         '''
         assert (isinstance(n, int) and n > 0), "Argument must be a positive integer."
-
+        
 
         seq = []
-        distribseq = []
         for _ in range(n):
             outcome = dict()
-            distribs = dict()
             for vertex in self.V:
                 outcome[vertex] = "default"
-
-            def assignnode(s):
             
+            def assignnode(name, node):
+                
+                # check if node is already observed
                 if (evidence != None):
-                    if s in evidence.keys():
-                        return [evidence[s], ["given value", "given value"]]
-
-                # calculate Bayesian parameters (mean and variance)
-                mean = self.Vdata[s]["mean_base"]
-                if (self.Vdata[s]["parents"] != None):
-                    for x in range(len(self.Vdata[s]["parents"])):
-                        parent = self.Vdata[s]["parents"][x]
-                        assert outcome[parent] != 'default', "Graph skeleton was not topologically ordered."
-                        mean += outcome[parent] * self.Vdata[s]["mean_scal"][x]
-                variance = self.Vdata[s]["variance"]
-
-                distribution = [mean, variance]
-
-                # draw random outcome from Gaussian 
-                return [random.gauss(mean, math.sqrt(variance)), distribution]          
-
+                    if name in evidence.keys():
+                        return evidence[name]
+                
+                # get parent values
+                p = self.getparents(name)
+                if (p == []):
+                    pvalues = []
+                else:
+                    pvalues = [outcome[t] for t in self.Vdata[name]["parents"]] # ideally can we pull this from the skeleton so as not to store parent data at all?
+                    for pvalue in pvalues:
+                        assert pvalue != 'default', "Graph skeleton was not topologically ordered."
+                
+                # use built in function to determine outcome
+                return node.choose(pvalues)
+           
             for s in self.V:
                 if (outcome[s] == "default"):
-                    pair = assignnode(s)
-                    outcome[s] = pair[0]
-                    distribs[s] = pair[1]
+                    outcome[s] = assignnode(s, self.nodes[s])
+            
             seq.append(outcome)
-            distribseq.append(distribs)
-
-        if mode == "normal":
-            return seq
-
-        elif mode == "verbose":
-            result = []
-            for x in range(len(seq)):
-                result.append(dict())
-                for node in seq[x]: 
-                     result[x][node] = [seq[x][node], distribseq[x][node][0], distribseq[x][node][1]] 
-            return result
+        return seq
+        

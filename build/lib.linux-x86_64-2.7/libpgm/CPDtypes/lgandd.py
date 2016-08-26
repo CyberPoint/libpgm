@@ -92,7 +92,7 @@ class Lgandd():
 
         # Check that we have at least one discrete parent.
         if not dispvals:
-            print("Did not find any discrete parent. Consider using an Lg node.")
+            print "Did not find any discrete parent. Consider using an Lg node."
 
         # find correct Gaussian
         lgdistribution = self.Vdataentry["hybcprob"][str(dispvals)]
@@ -106,7 +106,7 @@ class Lgandd():
                 else:
 
                     # temporary error check
-                    print("Attempted to sample node with unassigned parents.")
+                    print "Attempted to sample node with unassigned parents."
 
         variance = lgdistribution["variance"]
 

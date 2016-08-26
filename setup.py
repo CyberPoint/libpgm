@@ -12,12 +12,5 @@ setup(
     url = 'http://www.cyberpointllc.com',
     description = 'A library for creating and using probabilistic graphical models',
     long_description = 'This library provides tools for modeling large systems with Bayesian networks. Using these tools allows for efficient statistical analysis on large data sets.',
-    packages = ['libpgm', 'libpgm.CPDtypes', 'utils'],
-    classifiers = [
-        'Development Status :: 3 - Alpha',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
-        'License :: OSI Approved :: BSD License',
-        'Topic :: Scientific/Engineering :: Mathematics'
-    ]
+    packages = ['libpgm', 'libpgm.CPDtypes', 'utils']
 )

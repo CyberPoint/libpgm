@@ -27,7 +27,7 @@ A module for creating and managing node data. Node data in this library can have
 
 '''
 
-from .dictionary import Dictionary
+from dictionary import Dictionary
 
 class NodeData(Dictionary):
     '''
@@ -125,8 +125,8 @@ class NodeData(Dictionary):
             
             # import module containing class
             path = str(self.Vdata[entry]["type"])
-            exec("from libpgm.CPDtypes import " + path)
-            
+            exec("import CPDtypes." + path + " as " + path)
+
             # instantiate class
             exec("tmpnode = " + path + "." + str.capitalize(path) + "(self.Vdata[entry])")
 

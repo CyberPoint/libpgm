@@ -39,7 +39,7 @@ import random
 import math
 import sys
 
-from .orderedskeleton import OrderedSkeleton
+from orderedskeleton import OrderedSkeleton
 
 class LGBayesianNetwork(OrderedSkeleton):
     '''
@@ -80,7 +80,7 @@ class LGBayesianNetwork(OrderedSkeleton):
                 self.Vdata = nodedata.Vdata
                 '''A dictionary containing CPD data for the nodes.'''
             except: 
-                raise Exception("Inputs were malformed; first arg must contain V and E attributes and second arg must contain Vdata attribute.")
+                raise Exception, "Inputs were malformed; first arg must contain V and E attributes and second arg must contain Vdata attribute."
 
             assert sorted(self.V) == sorted(self.Vdata.keys()), "Vertices did not match node data"
 
