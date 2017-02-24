@@ -19,21 +19,21 @@ def list_edges(path):
     with open(path, "r") as f:
         j = json.load(f)
         for e in j["E"]: 
-            print "%s --> %s" % (e[0], e[1])
+            print("{} --> {}".format(e[0], e[1]))
 
 def list_nodes(path): 
     _validate(path)
     with open(path, "r") as f:
         j = json.load(f)
         for v in j["V"]: 
-            print "%s" % (v)
+            print("{}".format(v))
 
 def list_nodedata(path): 
     _validate(path)
     with open(path, "r") as f:
         j = json.load(f)
         for v in j["Vdata"].keys(): 
-            print "%s" % (v)
+            print("{}".format(v))
 
 def add_edge(path, edge): 
     _validate(path)
@@ -83,13 +83,13 @@ def alter_vdata(path, node):
     with open(path, "r") as f:
         j = json.load(f)
         assert node in j["V"], "node not present"
-        print "Current node data: "
-        print "------------------ "
+        print("Current node data: ")
+        print("------------------ ")
         try:
-            print json.dumps(j["Vdata"][node], indent=2)
+            print(json.dumps(j["Vdata"][node], indent=2))
         except KeyError: 
-            print "[uninitialized! you may create this node data]"
-        print "enter new node data: "
+            print("[uninitialized! you may create this node data]")
+        print("enter new node data: ")
         while (1):
             try:
                 minij = json.load(sys.stdin)
@@ -173,11 +173,11 @@ def _validate(path):
     with open(path) as f:
         j = json.load(f)
         if not (sorted(j["V"]) == sorted(j["Vdata"].keys())): 
-            print "warning: nodes and node data do not match" 
+            print("warning: nodes and node data do not match")
 
         # are the edges valid? 
         for e in j["E"]:
             if (e[0] not in j["V"]) or (e[1] not in j["V"]):
-                print "warning: nodes not found for this edge:",
-                print e
+                print("warning: nodes not found for this edge:")
+                print(e)
 
